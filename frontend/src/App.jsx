@@ -4,7 +4,7 @@ import { baseSepolia } from 'viem/chains'
 import { Transak } from '@transak/transak-sdk'
 import { Sun, Moon, Zap, Wallet, Activity, ExternalLink, CheckCircle2 } from 'lucide-react'
 
-// Configuration
+// Configuration - Production & Development
 const CONFIG = {
   AGENT_WALLET: import.meta.env.VITE_AGENT_WALLET_ADDRESS || '0x8f4e057c5ae678b68bb9c8d679e6524ac2ec7ebc',
   BACKEND_URL: import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000',
@@ -13,6 +13,15 @@ const CONFIG = {
   BALANCE_REFRESH_DELAY: 5000,
   RPC_URL: import.meta.env.VITE_RPC_URL || 'https://sepolia.base.org'
 };
+
+// Log configuration in development
+if (import.meta.env.DEV) {
+  console.log('🔧 MicroGate Config:', {
+    backendUrl: CONFIG.BACKEND_URL,
+    agentWallet: CONFIG.AGENT_WALLET,
+    rpcUrl: CONFIG.RPC_URL
+  });
+}
 
 // Create public client for reading blockchain data
 const publicClient = createPublicClient({

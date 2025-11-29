@@ -1,0 +1,22 @@
+# Vercel configuration file
+# Optimizes deployment for monorepo structure
+
+{
+  "version": 2,
+  "name": "microgate-frontend",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "installCommand": "npm install",
+  "framework": "vite",
+  "devCommand": "npm run dev",
+  "env": {
+    "VITE_BACKEND_URL": "",
+    "VITE_AGENT_WALLET_ADDRESS": "",
+    "VITE_RPC_URL": "",
+    "VITE_TRANSAK_API_KEY": "",
+    "VITE_TRANSAK_ENV": ""
+  },
+  "regions": ["iad1"],
+  "cleanUrls": true,
+  "trailingSlash": false
+}

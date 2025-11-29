@@ -45,14 +45,16 @@ validateConfig();
 // Initialize Express app
 const app = express();
 
-// CORS Configuration - Allow Frontend URL + localhost for development
+// CORS Configuration - Production + Development
 const allowedOrigins = [
-  process.env.FRONTEND_URL,
-  'http://localhost:5173',
+  process.env.FRONTEND_URL, // Production frontend (Vercel)
+  'http://localhost:5173',   // Local development
   'http://localhost:3000',
   'http://127.0.0.1:5173',
   'http://127.0.0.1:3000'
 ].filter(Boolean); // Remove undefined values
+
+console.log('🌐 Allowed CORS origins:', allowedOrigins);
 
 app.use(cors({
   origin: (origin, callback) => {

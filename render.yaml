@@ -1,0 +1,35 @@
+# Render.com configuration file
+# This file can be used for automatic deployment setup
+
+services:
+  - type: web
+    name: microgate-backend
+    runtime: node
+    region: oregon # Change to your preferred region
+    plan: free # or 'starter' for $7/month
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: PORT
+        value: 3000
+      - key: NODE_ENV
+        value: production
+      - key: PRIVATE_KEY
+        sync: false # Set manually in Render dashboard for security
+      - key: WALLET_ADDRESS
+        sync: false
+      - key: RPC_URL
+        value: https://sepolia.base.org
+      - key: USDC_CONTRACT
+        value: 0x036CbD53842c5426634e7929541eC2318f3dCF7e
+      - key: SUPABASE_URL
+        sync: false # Set manually in Render dashboard
+      - key: SUPABASE_KEY
+        sync: false # Set manually in Render dashboard
+      - key: FRONTEND_URL
+        sync: false # Set after Vercel deployment
+
+# Note: The frontend is deployed on Vercel, not Render
+# This file only configures the backend service
