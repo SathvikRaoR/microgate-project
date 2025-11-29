@@ -100,11 +100,22 @@ export async function runAgent() {
     console.log(`💰 Current Balance: ${balanceInEth.toFixed(6)} ETH`);
 
     const requiredAmount = parseFloat(CONFIG.PAYMENT_AMOUNT);
-    const minBalanceNeeded = requiredAmount + 0.00005; // Just need payment + small gas buffer
+    const gasEstimate = 0.00005; // Estimated gas cost
+    const minBalanceNeeded = requiredAmount + gasEstimate;
+    
+    console.log(`📊 Balance Check:`);
+    console.log(`   Payment Required: ${requiredAmount} ETH`);
+    console.log(`   Gas Buffer: ${gasEstimate} ETH`);
+    console.log(`   Total Needed: ${minBalanceNeeded} ETH`);
+    console.log(`   Current Balance: ${balanceInEth.toFixed(6)} ETH`);
     
     if (balanceInEth < minBalanceNeeded) {
-      throw new Error(`Insufficient balance. Required: ${requiredAmount} ETH + gas, Available: ${balanceInEth.toFixed(6)} ETH. Please add more ETH to your wallet.`);
+      const shortfall = (minBalanceNeeded - balanceInEth).toFixed(6);
+      throw new Error(`Insufficient balance. Required: ${minBalanceNeeded} ETH (${requiredAmount} ETH + ${gasEstimate} gas), Available: ${balanceInEth.toFixed(6)} ETH, Shortfall: ${shortfall} ETH`);
     }
+    
+    console.log(`✅ Balance sufficient: ${balanceInEth.toFixed(6)} ETH >= ${minBalanceNeeded} ETH`);
+
 
     // Step 1: Try to access the premium data
     console.log('\n📡 Attempting to access /api/premium-data...');

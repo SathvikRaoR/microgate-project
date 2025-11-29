@@ -202,11 +202,18 @@ function App() {
     try {
       addLog('[INFO] Agent activation started...');
       
-      // Updated balance check to match backend requirement
-      const minRequired = CONFIG.MIN_ETH_AMOUNT + 0.00005; // 0.0001 + gas buffer
-      if (!balance || parseFloat(balance.formatted) < minRequired) {
-        addLog('[ERROR] ❌ Insufficient balance');
-        throw new Error(`Insufficient balance. Required: ${minRequired} ETH (0.0001 ETH + gas), Available: ${balance ? balance.formatted : '0'} ETH`);
+      // Check if balance is loaded
+      if (!balance) {
+        addLog('[ERROR] ❌ Balance not loaded');
+        throw new Error('Balance not available. Please refresh balance first.');
+      }
+      
+      // Minimal balance check - just ensure some balance exists
+      // Backend will do the real validation with gas estimation
+      const currentBalance = parseFloat(balance.formatted);
+      if (currentBalance <= 0) {
+        addLog('[ERROR] ❌ Zero balance');
+        throw new Error(`No funds available. Current balance: ${balance.formatted} ETH. Please add funds first.`);
       }
       
       addLog('[SUCCESS] ✅ Balance OK: ' + formatBalance(balance) + ' ETH');
