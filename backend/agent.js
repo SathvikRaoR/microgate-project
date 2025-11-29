@@ -96,11 +96,14 @@ export async function runAgent() {
   try {
     // Check wallet balance
     const balance = await publicClient.getBalance({ address: account.address });
-    const balanceInEth = parseFloat(balance) / 1e18;
+    const balanceInEth = Number(balance) / 1e18;
     console.log(`💰 Current Balance: ${balanceInEth.toFixed(6)} ETH`);
 
-    if (balanceInEth < parseFloat(CONFIG.PAYMENT_AMOUNT)) {
-      throw new Error(`Insufficient balance. Required: ${CONFIG.PAYMENT_AMOUNT} ETH, Available: ${balanceInEth.toFixed(6)} ETH`);
+    const requiredAmount = parseFloat(CONFIG.PAYMENT_AMOUNT);
+    const minBalanceNeeded = requiredAmount * 1.5; // Account for gas fees
+    
+    if (balanceInEth < minBalanceNeeded) {
+      throw new Error(`Insufficient balance. Required: ${requiredAmount} ETH + gas, Available: ${balanceInEth.toFixed(6)} ETH. Please add more ETH to your wallet.`);
     }
 
     // Step 1: Try to access the secret

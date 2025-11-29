@@ -209,6 +209,11 @@ function App() {
     setAgentResult(null);
 
     try {
+      // Check balance first
+      if (!balance || parseFloat(balance.formatted) < 0.00015) {
+        throw new Error('Insufficient balance. You need at least 0.00015 ETH (including gas fees).');
+      }
+
       const response = await fetch(`${CONFIG.BACKEND_URL}/api/trigger-agent`, {
         method: 'POST',
         headers: {
@@ -218,6 +223,11 @@ function App() {
           wallet: CONFIG.AGENT_WALLET
         })
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || errorData.message || 'Agent execution failed');
+      }
 
       const data = await response.json();
 
