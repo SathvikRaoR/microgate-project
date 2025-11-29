@@ -47,7 +47,8 @@ const app = express();
 
 // CORS Configuration - Production + Development
 const allowedOrigins = [
-  process.env.FRONTEND_URL, // Production frontend (Vercel)
+  'https://microgate-project-m8fq.vercel.app', // Production frontend (Vercel)
+  process.env.FRONTEND_URL, // Additional frontend URL from env
   'http://localhost:5173',   // Local development
   'http://localhost:3000',
   'http://127.0.0.1:5173',
@@ -55,20 +56,42 @@ const allowedOrigins = [
 ].filter(Boolean); // Remove undefined values
 
 console.log('🌐 Allowed CORS origins:', allowedOrigins);
+console.log('🌐 NODE_ENV:', process.env.NODE_ENV);
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
+    // Allow requests with no origin (like mobile apps, Postman, curl)
+    if (!origin) {
+      console.log('✅ CORS: Allowing request with no origin');
+      return callback(null, true);
     }
+    
+    // Check if origin is in allowed list
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      console.log('✅ CORS: Allowing origin:', origin);
+      return callback(null, true);
+    }
+    
+    // In production, also allow Vercel preview deployments and .vercel.app domains
+    if (process.env.NODE_ENV === 'production' && 
+        (origin.endsWith('.vercel.app') || origin.endsWith('.vercel.com'))) {
+      console.log('✅ CORS: Allowing Vercel domain:', origin);
+      return callback(null, true);
+    }
+    
+    // Allow in development mode
+    if (process.env.NODE_ENV === 'development') {
+      console.log('✅ CORS: Allowing in development mode:', origin);
+      return callback(null, true);
+    }
+    
+    // Reject
+    console.log('❌ CORS: Blocking origin:', origin);
+    callback(new Error('Not allowed by CORS'));
   },
-  methods: ['GET', 'POST'],
-  credentials: true
+  methods: ['GET', 'POST', 'OPTIONS'],
+  credentials: true,
+  optionsSuccessStatus: 200
 }));
 
 // Rate Limiting - 5 requests per minute per IP
