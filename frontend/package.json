@@ -12,6 +12,8 @@
   "dependencies": {
     "@tanstack/react-query": "^5.28.0",
     "@transak/transak-sdk": "^3.0.0",
+    "jspdf": "^3.0.4",
+    "jspdf-autotable": "^5.0.2",
     "lucide-react": "^0.555.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

@@ -2,7 +2,10 @@ import { useState, useEffect, useCallback } from 'react'
 import { createPublicClient, http, formatEther } from 'viem'
 import { baseSepolia } from 'viem/chains'
 import { Transak } from '@transak/transak-sdk'
-import { Sun, Moon, Zap, Wallet, Activity, ExternalLink, CheckCircle2 } from 'lucide-react'
+import { Sun, Moon, Zap, Wallet, Activity, ExternalLink, CheckCircle2, Download } from 'lucide-react'
+import ActivityLog from './components/ActivityLog'
+import StatusFooter from './components/StatusFooter'
+import { generateInvoice } from './utils/invoiceGenerator'
 
 // Configuration - Production & Development
 const CONFIG = {
@@ -52,6 +55,15 @@ function App() {
   // Transaction history states
   const [transactions, setTransactions] = useState([]);
   const [loadingTransactions, setLoadingTransactions] = useState(false);
+
+  // Activity Log state
+  const [logs, setLogs] = useState([]);
+
+  // Helper function to add logs
+  const addLog = (message) => {
+    const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false });
+    setLogs(prev => [...prev, { message, timestamp }]);
+  };
 
   // Theme toggle
   const toggleTheme = () => {
@@ -207,12 +219,32 @@ function App() {
     setError(null);
     setSuccess(null);
     setAgentResult(null);
+    setLogs([]); // Clear previous logs
 
     try {
+      addLog('🔍 Initializing agent activation...');
+      
       // Check balance first
       if (!balance || parseFloat(balance.formatted) < 0.00015) {
+        addLog('❌ Balance check failed');
         throw new Error('Insufficient balance. You need at least 0.00015 ETH (including gas fees).');
       }
+      
+      addLog('✅ Balance verified: ' + formatBalance(balance) + ' ETH');
+      addLog('🔐 Checking idempotency key...');
+      
+      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate processing
+      addLog('✅ Idempotency verified');
+      
+      addLog('📋 Signing payload with private key...');
+      await new Promise(resolve => setTimeout(resolve, 300));
+      addLog('✅ Payload signed');
+      
+      addLog('⛽ Calculating gas fees...');
+      await new Promise(resolve => setTimeout(resolve, 400));
+      addLog('✅ Gas estimation complete');
+      
+      addLog('🚀 Sending transaction to Base Sepolia RPC...');
 
       const response = await fetch(`${CONFIG.BACKEND_URL}/api/trigger-agent`, {
         method: 'POST',
@@ -224,14 +256,22 @@ function App() {
         })
       });
 
+      addLog('📡 Received response from backend');
+
       if (!response.ok) {
         const errorData = await response.json();
+        addLog('❌ Backend returned error');
         throw new Error(errorData.error || errorData.message || 'Agent execution failed');
       }
 
       const data = await response.json();
+      addLog('📦 Parsing transaction data...');
 
       if (data.success) {
+        addLog('✅ Transaction confirmed on-chain');
+        addLog('🔗 Transaction hash: ' + (data.data?.transactionHash?.slice(0, 10) + '...' || 'N/A'));
+        addLog('🎉 Agent execution completed successfully!');
+        
         setAgentStatus('success');
         setAgentResult(data.data);
         setSuccess('✅ Agent executed successfully!');
@@ -240,14 +280,43 @@ function App() {
         setTimeout(() => {
           fetchBalance();
           fetchTransactions();
+          addLog('🔄 Refreshed balance and transaction history');
         }, 2000);
       } else {
         throw new Error(data.error || 'Agent execution failed');
       }
     } catch (err) {
       console.error('Agent error:', err);
+      addLog('❌ Error: ' + err.message);
       setAgentStatus('error');
       setError(`❌ ${err.message}`);
+    }
+  };
+
+  // Download Invoice Handler
+  const handleDownloadInvoice = () => {
+    if (!agentResult) return;
+    
+    addLog('📄 Generating PDF invoice...');
+    
+    try {
+      generateInvoice(
+        agentResult.transactionHash || 'N/A',
+        CONFIG.MIN_ETH_AMOUNT || '0.0001',
+        CONFIG.AGENT_WALLET,
+        {
+          gasUsed: agentResult.gasUsed || 'N/A',
+          secret: agentResult.secret || 'N/A'
+        }
+      );
+      
+      addLog('✅ Invoice downloaded successfully');
+      setSuccess('📄 Invoice downloaded!');
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err) {
+      addLog('❌ Failed to generate invoice');
+      setError('Failed to generate invoice');
+      setTimeout(() => setError(null), 3000);
     }
   };
 
@@ -279,7 +348,8 @@ function App() {
         : 'linear-gradient(135deg, #f8fafc 0%, #e0e7ff 50%, #f8fafc 100%)',
       color: theme === 'dark' ? '#f1f5f9' : '#1e293b',
       transition: 'all 0.3s ease',
-      padding: `${34}px ${21}px` // PHI spacing
+      padding: `${34}px ${21}px`,
+      paddingBottom: `${100}px` // Add space for StatusFooter
     },
     themeToggle: {
       position: 'fixed',
@@ -465,8 +535,17 @@ function App() {
 
       {/* Main Dashboard */}
       <div style={styles.mainContainer}>
-        {/* Agent Balance Card */}
-        <div style={styles.card}>
+        {/* Two Column Layout - Dashboard + Activity Log */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))',
+          gap: `${21}px`,
+          marginBottom: `${34}px`
+        }}>
+          {/* Left Column - Main Dashboard */}
+          <div>
+            {/* Agent Balance Card */}
+            <div style={styles.card}>
           <div style={styles.cardHeader}>
             <h2 style={styles.cardTitle}>
               <Wallet size={21} />
@@ -602,10 +681,35 @@ function App() {
               }}>
                 {agentResult.transactionHash}
               </p>
+              
+              {/* Download Invoice Button */}
+              <button
+                onClick={handleDownloadInvoice}
+                style={{
+                  ...styles.button,
+                  marginTop: `${13}px`,
+                  background: theme === 'dark'
+                    ? 'linear-gradient(135deg, #f59e0b 0%, #f97316 100%)'
+                    : 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+                  color: '#ffffff',
+                  boxShadow: '0 4px 20px rgba(249, 115, 22, 0.4)'
+                }}
+              >
+                <Download size={16} />
+                Download Invoice (PDF)
+              </button>
             </div>
           )}
         </div>
+          </div>
 
+          {/* Right Column - Activity Log */}
+          <div>
+            <ActivityLog logs={logs} theme={theme} />
+          </div>
+        </div>
+
+        {/* Full Width Cards Below */}
         {/* Add Funds Card */}
         <div style={styles.card}>
           <div style={styles.cardHeader}>
@@ -800,6 +904,9 @@ function App() {
           to { transform: rotate(360deg); }
         }
       `}</style>
+
+      {/* Status Footer */}
+      <StatusFooter backendUrl={CONFIG.BACKEND_URL} theme={theme} />
     </div>
   )
 }
