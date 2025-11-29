@@ -380,10 +380,13 @@ function App() {
         ? 'linear-gradient(135deg, #e0d4ff 0%, #ff6ec7 100%)'
         : 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
       WebkitBackgroundClip: 'text',
+      WebkitTextFillColor: 'transparent',
+      MozBackgroundClip: 'text',
+      MozTextFillColor: 'transparent',
       backgroundClip: 'text',
-      color: 'transparent',
       marginBottom: `${13}px`,
-      letterSpacing: '-0.02em'
+      letterSpacing: '-0.02em',
+      display: 'inline-block'
     },
     subtitle: {
       fontSize: '18px',
