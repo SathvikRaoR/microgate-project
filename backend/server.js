@@ -2,12 +2,25 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
+import { createClient } from '@supabase/supabase-js';
 import { createPublicClient, http, formatUnits } from 'viem';
 import { baseSepolia } from 'viem/chains';
 import { isAddress } from 'viem';
 import { runAgent } from './agent.js';
 
 dotenv.config();
+
+// Initialize Supabase client
+let supabase = null;
+if (process.env.SUPABASE_URL && process.env.SUPABASE_KEY) {
+  supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_KEY
+  );
+  console.log('✅ Supabase client initialized');
+} else {
+  console.warn('⚠️  Supabase not configured. Transaction history will not be saved.');
+}
 
 // Configuration validation
 const validateConfig = () => {
@@ -161,6 +174,29 @@ async function validatePayment(paymentHash) {
 
     console.log('Payment verified successfully!');
     
+    // Save transaction to Supabase
+    if (supabase) {
+      try {
+        const { error: insertError } = await supabase
+          .from('transactions')
+          .insert({
+            agent_address: receipt.from,
+            tx_hash: paymentHash,
+            amount: isToServerWallet ? parseFloat(formatUnits(receipt.value || 0n, 18)) : 0,
+            status: 'confirmed'
+          });
+
+        if (insertError) {
+          console.error('Failed to save transaction to Supabase:', insertError);
+        } else {
+          console.log('✅ Transaction saved to Supabase database');
+        }
+      } catch (dbError) {
+        console.error('Supabase error:', dbError);
+        // Don't fail the validation if database save fails
+      }
+    }
+    
     return {
       valid: true,
       secret: 'The Agent Economy is Live!',
@@ -222,6 +258,57 @@ app.get('/api/health', (req, res) => {
     network: 'Base Sepolia',
     wallet: CONFIG.SERVER_WALLET
   });
+});
+
+/**
+ * GET /api/transactions - Get transaction history
+ * Returns all transactions from Supabase database
+ */
+app.get('/api/transactions', async (req, res) => {
+  if (!supabase) {
+    return res.status(503).json({
+      error: 'Database not configured',
+      message: 'Supabase is not set up. Please configure SUPABASE_URL and SUPABASE_KEY.'
+    });
+  }
+
+  try {
+    const { agent_address } = req.query;
+
+    let query = supabase
+      .from('transactions')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(100);
+
+    // Filter by agent address if provided
+    if (agent_address) {
+      query = query.eq('agent_address', agent_address);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('Supabase query error:', error);
+      return res.status(500).json({
+        error: 'Failed to fetch transactions',
+        details: error.message
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      transactions: data,
+      count: data.length
+    });
+
+  } catch (error) {
+    console.error('Transaction fetch error:', error);
+    return res.status(500).json({
+      error: 'Internal server error',
+      details: error.message
+    });
+  }
 });
 
 /**

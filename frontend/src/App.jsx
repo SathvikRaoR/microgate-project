@@ -6,9 +6,9 @@ import { Sun, Moon, Zap, Wallet, Activity, ExternalLink, CheckCircle2 } from 'lu
 
 // Configuration
 const CONFIG = {
-  AGENT_WALLET: import.meta.env.VITE_AGENT_WALLET_ADDRESS || '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+  AGENT_WALLET: import.meta.env.VITE_AGENT_WALLET_ADDRESS || '0x8f4e057c5ae678b68bb9c8d679e6524ac2ec7ebc',
   BACKEND_URL: import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000',
-  TRANSAK_API_KEY: import.meta.env.VITE_TRANSAK_API_KEY || '0x6bdcaee48fcd51ed38822b3912580427931f383a',
+  TRANSAK_API_KEY: import.meta.env.VITE_TRANSAK_API_KEY || '3fd3ee4e-dd3c-49be-89bc-7bd527402ddf',
   TRANSAK_ENVIRONMENT: import.meta.env.VITE_TRANSAK_ENV || 'STAGING',
   BALANCE_REFRESH_DELAY: 5000,
   RPC_URL: import.meta.env.VITE_RPC_URL || 'https://sepolia.base.org'
@@ -39,6 +39,10 @@ function App() {
   const [isError, setIsError] = useState(false);
   const [agentStatus, setAgentStatus] = useState('idle'); // idle, activating, success, error
   const [agentResult, setAgentResult] = useState(null);
+  
+  // Transaction history states
+  const [transactions, setTransactions] = useState([]);
+  const [loadingTransactions, setLoadingTransactions] = useState(false);
 
   // Theme toggle
   const toggleTheme = () => {
@@ -46,6 +50,27 @@ function App() {
     setTheme(newTheme);
     localStorage.setItem('microgate-theme', newTheme);
   };
+
+  // Fetch transaction history
+  const fetchTransactions = useCallback(async () => {
+    if (!CONFIG.AGENT_WALLET) return;
+    
+    setLoadingTransactions(true);
+    try {
+      const response = await fetch(
+        `${CONFIG.BACKEND_URL}/api/transactions?agent_address=${CONFIG.AGENT_WALLET}`
+      );
+      const data = await response.json();
+      
+      if (data.success) {
+        setTransactions(data.transactions || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch transactions:', err);
+    } finally {
+      setLoadingTransactions(false);
+    }
+  }, []);
 
   // Fetch balance using viem
   const fetchBalance = useCallback(async () => {
@@ -86,11 +111,15 @@ function App() {
       setError('Please configure VITE_AGENT_WALLET_ADDRESS in .env file');
     } else {
       fetchBalance();
+      fetchTransactions();
       // Auto-refresh balance every 30 seconds
-      const interval = setInterval(fetchBalance, 30000);
+      const interval = setInterval(() => {
+        fetchBalance();
+        fetchTransactions();
+      }, 30000);
       return () => clearInterval(interval);
     }
-  }, [fetchBalance]);
+  }, [fetchBalance, fetchTransactions]);
 
   const handleAddFunds = useCallback(() => {
     if (!CONFIG.TRANSAK_API_KEY || CONFIG.TRANSAK_API_KEY.includes('YOUR_TRANSAK')) {
@@ -154,7 +183,11 @@ function App() {
       setError(null);
     } catch (err) {
       console.error('Transak initialization error:', err);
-      setError('Failed to initialize payment widget. Please check API key and try again.');
+      if (err.message && err.message.includes('API key')) {
+        setError('❌ Transak API Key Error: Please add localhost:5173 to your API key\'s allowed origins at https://transak.com/');
+      } else {
+        setError('Failed to initialize payment widget. Please check API key and try again.');
+      }
       setTransakInstance(null);
     }
   }, [theme, fetchBalance, transakInstance]);
@@ -184,9 +217,10 @@ function App() {
         setAgentResult(data.data);
         setSuccess('✅ Agent executed successfully!');
         
-        // Refresh balance after agent completes
+        // Refresh balance and transactions after agent completes
         setTimeout(() => {
           fetchBalance();
+          fetchTransactions();
         }, 2000);
       } else {
         throw new Error(data.error || 'Agent execution failed');
@@ -614,6 +648,102 @@ function App() {
               </div>
             ))}
           </div>
+        </div>
+
+        {/* Transaction History Card */}
+        <div style={styles.card}>
+          <div style={styles.cardHeader}>
+            <h2 style={styles.cardTitle}>
+              📜 Transaction History
+            </h2>
+            {loadingTransactions && (
+              <Activity size={16} className="animate-spin" style={{color: theme === 'dark' ? '#a78bfa' : '#7c3aed'}} />
+            )}
+          </div>
+
+          {transactions.length === 0 ? (
+            <p style={{color: theme === 'dark' ? '#94a3b8' : '#64748b', textAlign: 'center', padding: `${21}px`, fontSize: '14px'}}>
+              No transactions yet. Activate the agent to see transaction history.
+            </p>
+          ) : (
+            <div style={{overflowX: 'auto'}}>
+              <table style={{
+                width: '100%',
+                borderCollapse: 'collapse',
+                fontSize: '13px'
+              }}>
+                <thead>
+                  <tr style={{
+                    borderBottom: theme === 'dark' ? '1px solid rgba(124, 58, 237, 0.3)' : '1px solid rgba(59, 130, 246, 0.3)'
+                  }}>
+                    <th style={{padding: `${13}px`, textAlign: 'left', color: theme === 'dark' ? '#cbd5e1' : '#64748b', fontWeight: '600'}}>Date</th>
+                    <th style={{padding: `${13}px`, textAlign: 'left', color: theme === 'dark' ? '#cbd5e1' : '#64748b', fontWeight: '600'}}>Transaction Hash</th>
+                    <th style={{padding: `${13}px`, textAlign: 'right', color: theme === 'dark' ? '#cbd5e1' : '#64748b', fontWeight: '600'}}>Amount (ETH)</th>
+                    <th style={{padding: `${13}px`, textAlign: 'center', color: theme === 'dark' ? '#cbd5e1' : '#64748b', fontWeight: '600'}}>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {transactions.map((tx, idx) => (
+                    <tr key={tx.id} style={{
+                      borderBottom: idx < transactions.length - 1 ? (theme === 'dark' ? '1px solid rgba(51, 65, 85, 0.5)' : '1px solid rgba(226, 232, 240, 0.5)') : 'none'
+                    }}>
+                      <td style={{padding: `${13}px`, color: theme === 'dark' ? '#cbd5e1' : '#64748b'}}>
+                        {new Date(tx.created_at).toLocaleDateString('en-US', { 
+                          month: 'short', 
+                          day: 'numeric', 
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </td>
+                      <td style={{padding: `${13}px`}}>
+                        <a
+                          href={`https://sepolia.basescan.org/tx/${tx.tx_hash}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            color: theme === 'dark' ? '#a78bfa' : '#7c3aed',
+                            textDecoration: 'none',
+                            fontFamily: 'monospace',
+                            fontSize: '12px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}
+                        >
+                          {tx.tx_hash.slice(0, 10)}...{tx.tx_hash.slice(-8)}
+                          <ExternalLink size={12} />
+                        </a>
+                      </td>
+                      <td style={{padding: `${13}px`, textAlign: 'right', fontFamily: 'monospace', color: theme === 'dark' ? '#86efac' : '#16a34a', fontWeight: '600'}}>
+                        {parseFloat(tx.amount).toFixed(6)}
+                      </td>
+                      <td style={{padding: `${13}px`, textAlign: 'center'}}>
+                        <span style={{
+                          padding: '4px 8px',
+                          borderRadius: '6px',
+                          fontSize: '11px',
+                          fontWeight: '600',
+                          background: tx.status === 'confirmed' 
+                            ? (theme === 'dark' ? 'rgba(34, 197, 94, 0.2)' : 'rgba(34, 197, 94, 0.2)')
+                            : tx.status === 'pending'
+                            ? (theme === 'dark' ? 'rgba(251, 191, 36, 0.2)' : 'rgba(251, 191, 36, 0.2)')
+                            : (theme === 'dark' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(239, 68, 68, 0.2)'),
+                          color: tx.status === 'confirmed'
+                            ? '#22c55e'
+                            : tx.status === 'pending'
+                            ? '#fbbf24'
+                            : '#ef4444'
+                        }}>
+                          {tx.status.toUpperCase()}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
         {/* Info Section */}
