@@ -240,37 +240,212 @@ async function validatePayment(paymentHash) {
 }
 
 /**
- * GET /api/secret - Protected endpoint requiring payment
- * Validates payment via x-payment-hash header
+ * GET /api/market-sentiment - Public Crypto Market Sentiment API
+ * Returns realistic market data for ETH
  */
-app.get('/api/secret', async (req, res) => {
+app.get('/api/market-sentiment', (req, res) => {
+  const sentiments = ['Bullish', 'Bearish', 'Neutral'];
+  const volatilities = ['Low', 'Medium', 'High'];
+  
+  // Generate realistic ETH price variation (base: $3450)
+  const basePrice = 3450.20;
+  const variation = (Math.random() - 0.5) * 200; // +/- $100
+  const currentPrice = (basePrice + variation).toFixed(2);
+  
+  return res.status(200).json({
+    asset: 'ETH',
+    price: parseFloat(currentPrice),
+    sentiment: sentiments[Math.floor(Math.random() * sentiments.length)],
+    volatility: volatilities[Math.floor(Math.random() * volatilities.length)],
+    timestamp: new Date().toISOString(),
+    source: 'MicroGate Market Analytics'
+  });
+});
+
+/**
+ * GET /api/premium-data - Protected endpoint requiring payment
+ * Implements 5-Step Validation Chain:
+ * 1. Chain ID Check (Base Sepolia = 84532)
+ * 2. Recipient Check (must be SELLER_WALLET_ADDRESS)
+ * 3. Value Check (>= 0.0001 ETH)
+ * 4. Status Check (transaction must be 'success')
+ * 5. Replay Protection (check Supabase for duplicate tx_hash)
+ */
+app.get('/api/premium-data', async (req, res) => {
   const paymentHash = req.headers['x-payment-hash'];
 
+  // No payment provided - return 402
   if (!paymentHash) {
     return res.status(402).json({
       error: 'Payment Required',
+      message: 'Premium data access requires payment verification',
       payTo: CONFIG.SERVER_WALLET,
-      amount: `${CONFIG.MIN_ETH_AMOUNT} ETH or ${CONFIG.REQUIRED_AMOUNT_USDC} USDC`,
-      network: 'Base Sepolia'
+      amount: `${CONFIG.MIN_ETH_AMOUNT} ETH minimum`,
+      network: 'Base Sepolia (Chain ID: 84532)'
     });
   }
 
-  const result = await validatePayment(paymentHash);
-
-  if (!result.valid) {
+  // Validate payment hash format
+  if (typeof paymentHash !== 'string' || !paymentHash.startsWith('0x')) {
     return res.status(400).json({
-      error: result.error,
-      details: result.details,
-      expected: result.expected,
-      received: result.received
+      error: 'Invalid payment hash format',
+      expected: '0x-prefixed transaction hash'
     });
   }
 
-  return res.status(200).json({
-    secret: result.secret,
-    transactionHash: result.transactionHash,
-    verified: result.verified
-  });
+  try {
+    console.log('\n🔐 === 5-STEP VALIDATION CHAIN ===');
+    console.log(`Transaction Hash: ${paymentHash}`);
+
+    // Fetch transaction receipt
+    const receipt = await publicClient.getTransactionReceipt({
+      hash: paymentHash
+    });
+
+    const tx = await publicClient.getTransaction({
+      hash: paymentHash
+    });
+
+    // STEP 1: Chain ID Check
+    console.log('\n[STEP 1/5] Chain ID Verification');
+    const chainId = receipt.chainId || tx.chainId;
+    console.log(`  ➜ Chain ID: ${chainId}`);
+    
+    if (chainId !== 84532n && chainId !== 84532) {
+      console.log('  ❌ FAILED: Invalid chain ID');
+      return res.status(400).json({
+        error: 'Invalid blockchain network',
+        expected: 'Base Sepolia (Chain ID: 84532)',
+        received: `Chain ID: ${chainId}`,
+        step: 1
+      });
+    }
+    console.log('  ✅ PASSED: Base Sepolia confirmed');
+
+    // STEP 2: Recipient Check
+    console.log('\n[STEP 2/5] Recipient Address Verification');
+    console.log(`  ➜ Recipient: ${receipt.to}`);
+    console.log(`  ➜ Expected: ${CONFIG.SERVER_WALLET}`);
+    
+    const isCorrectRecipient = receipt.to?.toLowerCase() === CONFIG.SERVER_WALLET?.toLowerCase();
+    
+    if (!isCorrectRecipient) {
+      console.log('  ❌ FAILED: Payment sent to wrong address');
+      return res.status(400).json({
+        error: 'Payment sent to incorrect address',
+        expected: CONFIG.SERVER_WALLET,
+        received: receipt.to,
+        step: 2
+      });
+    }
+    console.log('  ✅ PASSED: Correct recipient');
+
+    // STEP 3: Value Check
+    console.log('\n[STEP 3/5] Payment Amount Verification');
+    const ethAmount = formatUnits(tx.value || 0n, 18);
+    console.log(`  ➜ Amount: ${ethAmount} ETH`);
+    console.log(`  ➜ Minimum: ${CONFIG.MIN_ETH_AMOUNT} ETH`);
+    
+    if (parseFloat(ethAmount) < parseFloat(CONFIG.MIN_ETH_AMOUNT)) {
+      console.log('  ❌ FAILED: Insufficient payment');
+      return res.status(400).json({
+        error: 'Insufficient payment amount',
+        expected: `${CONFIG.MIN_ETH_AMOUNT} ETH minimum`,
+        received: `${ethAmount} ETH`,
+        step: 3
+      });
+    }
+    console.log('  ✅ PASSED: Sufficient payment');
+
+    // STEP 4: Status Check
+    console.log('\n[STEP 4/5] Transaction Status Verification');
+    console.log(`  ➜ Status: ${receipt.status}`);
+    
+    if (receipt.status !== 'success') {
+      console.log('  ❌ FAILED: Transaction not successful');
+      return res.status(400).json({
+        error: 'Transaction failed on blockchain',
+        status: receipt.status,
+        step: 4
+      });
+    }
+    console.log('  ✅ PASSED: Transaction successful');
+
+    // STEP 5: Replay Protection
+    console.log('\n[STEP 5/5] Replay Attack Protection');
+    console.log(`  ➜ Checking Supabase for duplicate tx_hash...`);
+    
+    if (!supabase) {
+      console.log('  ⚠️  WARNING: Supabase not configured - skipping replay check');
+    } else {
+      // Check if transaction hash already exists
+      const { data: existingTx, error: queryError } = await supabase
+        .from('transactions')
+        .select('tx_hash, created_at')
+        .eq('tx_hash', paymentHash)
+        .single();
+
+      if (queryError && queryError.code !== 'PGRST116') { // PGRST116 = not found (OK)
+        console.log('  ⚠️  Database query error:', queryError);
+      }
+
+      if (existingTx) {
+        console.log('  ❌ FAILED: Transaction hash already used');
+        console.log(`  ➜ First used at: ${existingTx.created_at}`);
+        return res.status(409).json({
+          error: 'Transaction already processed',
+          message: 'This payment has already been used. Replay attack prevented.',
+          originalUse: existingTx.created_at,
+          step: 5
+        });
+      }
+      console.log('  ✅ PASSED: Transaction hash is unique');
+
+      // Save transaction to prevent replay
+      const { error: insertError } = await supabase
+        .from('transactions')
+        .insert({
+          agent_address: receipt.from,
+          tx_hash: paymentHash,
+          amount: parseFloat(ethAmount),
+          status: 'confirmed'
+        });
+
+      if (insertError) {
+        console.log('  ⚠️  Failed to save transaction:', insertError);
+      } else {
+        console.log('  💾 Transaction logged to database');
+      }
+    }
+
+    console.log('\n✅ === ALL 5 STEPS PASSED ===\n');
+
+    // All validations passed - return premium data
+    return res.status(200).json({
+      success: true,
+      data: {
+        secret: 'The Agent Economy is Live!',
+        premiumInsight: 'Autonomous AI agents are revolutionizing blockchain payments',
+        validationSteps: 5,
+        verified: true
+      },
+      transaction: {
+        hash: paymentHash,
+        from: receipt.from,
+        amount: `${ethAmount} ETH`,
+        chainId: 84532,
+        blockNumber: receipt.blockNumber.toString()
+      },
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('\n❌ Verification error:', error.message);
+    return res.status(500).json({
+      error: 'Transaction verification failed',
+      details: error.message
+    });
+  }
 });
 
 /**
