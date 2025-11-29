@@ -98,13 +98,55 @@ MicroGate implements the **x402 Payment Protocol** - a novel approach where AI a
 
 ---
 
-## 🆕 What's New in v3.0
+## 🆕 What's New in v3.5 - Production Ready 🚀
 
-### Database Integration 🗄️
+### Production-Grade Features ⚡
 
-**Major Update**: Full Supabase PostgreSQL integration for persistent transaction storage!
+**Major Update**: Enterprise-ready features for production deployment!
 
-#### New Features
+#### New Components
+
+1. **📊 Activity Log Monitor**
+   - Real-time system activity tracking with timestamps
+   - Glassmorphism design matching dashboard theme
+   - Dynamic light/dark mode support
+   - Auto-scroll to latest events
+   - Transaction lifecycle visualization
+   - Beautiful fade-in animations for new logs
+
+2. **📄 PDF Invoice Generator**
+   - Professional invoice generation for each transaction
+   - Includes transaction hash, amount, timestamp
+   - Gas usage and wallet addresses
+   - Base64 MicroGate logo embedded
+   - Auto-download on completion
+   - Compliance-ready format
+
+3. **🎯 System Status Footer**
+   - Real-time API health monitoring
+   - Latency tracking and display
+   - Connection status indicators
+   - 30-second auto-refresh
+   - Glassmorphism fixed footer design
+   - Color-coded status (green/yellow/red)
+
+4. **🎨 Enhanced UI/UX**
+   - Fixed gradient text glitch on theme toggle
+   - Two-column responsive layout
+   - Golden ratio spacing throughout
+   - Smooth theme transitions
+   - Activity log integrated with dashboard
+
+#### Technical Improvements
+
+- ✅ **jsPDF Integration** - Client-side PDF generation
+- ✅ **Activity Logging System** - Real-time event tracking
+- ✅ **Health Check API** - Backend monitoring endpoint
+- ✅ **Fixed Title Gradient Bug** - No more color rectangles
+- ✅ **Unified Theme System** - All components support light/dark
+- ✅ **Production Documentation** - Complete PRODUCTION_FEATURES.md
+
+### Database Integration (v3.0) 🗄️
 
 1. **📊 Transaction History Card**
    - Beautiful table view with Date | Hash | Amount | Status columns
@@ -201,7 +243,10 @@ npm start
 │  ┌─────────────────────────────────────────────────────┐    │
 │  │  • Light/Dark Theme Toggle                          │    │
 │  │  • Real-time Balance Monitoring                     │    │
+│  │  • Activity Log Monitor (NEW)                       │    │
 │  │  • Transaction History Table                        │    │
+│  │  • PDF Invoice Generator (NEW)                      │    │
+│  │  • System Status Footer (NEW)                       │    │
 │  │  • Transak Payment Widget                           │    │
 │  │  • Agent Control Panel                              │    │
 │  └─────────────────────────────────────────────────────┘    │
@@ -217,6 +262,7 @@ npm start
 │  │  • CORS Protection                                  │    │
 │  │  • Supabase Transaction Logging                    │    │
 │  │  • AI Agent Process Management                     │    │
+│  │  • Health Check Endpoint (NEW)                     │    │
 │  └─────────────────────────────────────────────────────┘    │
 │                         Port: 3000                           │
 └──────────────────────────┬───────────────────────────────────┘
@@ -241,7 +287,9 @@ npm start
 4. **Agent Sends Payment** → Base Sepolia blockchain transaction
 5. **Backend Verifies** → Checks on-chain transaction + saves to Supabase
 6. **Agent Gets Data** → Backend returns premium content
-7. **Frontend Updates** → History table refreshes with new transaction
+7. **Frontend Updates** → History table + Activity Log refresh
+8. **User Downloads Invoice** → PDF generated with jsPDF
+9. **System Monitor** → Status Footer tracks API health every 30s
 
 ---
 
@@ -512,18 +560,47 @@ Dashboard automatically displays ETH balance and auto-refreshes every 30 seconds
 
 ### 3. Activate AI Agent
 
-1. Ensure wallet has ≥ 0.0001 ETH
+1. Ensure wallet has ≥ 0.00015 ETH (includes gas buffer)
 2. Click "Activate Agent" button
-3. Agent sends payment and receives data
-4. Transaction appears in history table
+3. Watch Activity Log for real-time progress
+4. Agent sends payment and receives data
+5. Download PDF invoice when complete
+6. Transaction appears in history table
 
-### 4. View Transaction History
+### 4. Monitor System Activity
+
+**Activity Log** displays:
+- Real-time event tracking with timestamps
+- Transaction lifecycle (initialization → verification → completion)
+- Error messages and status updates
+- Auto-scrolls to latest events
+- Supports light/dark themes
+
+**Status Footer** shows:
+- API health status (Online/Degraded/Offline)
+- Network latency in milliseconds
+- Last check timestamp
+- Color-coded indicators (green/yellow/red)
+
+### 5. View Transaction History
 
 History card shows all past transactions with:
 - Date & time
 - Transaction hash (links to BaseScan)
 - Amount in ETH
 - Status badge (confirmed/pending/failed)
+
+### 6. Download Transaction Receipts
+
+After successful agent activation:
+1. Click "Download Invoice" button
+2. PDF receipt generated with:
+   - Transaction hash
+   - Amount paid
+   - Timestamp
+   - Wallet addresses
+   - Gas usage
+   - MicroGate branding
 
 ---
 
@@ -535,12 +612,18 @@ History card shows all past transactions with:
 | | Viem | 2.7.0 |
 | | Vite | 5.4.21 |
 | | Transak SDK | 3.0.0 |
+| | jsPDF | 2.5.2 |
+| | jsPDF-AutoTable | 3.8.4 |
+| | Lucide React | 0.263.1 |
 | Backend | Express | 4.18.0 |
 | | Viem | 2.7.0 |
 | | Supabase JS | 2.x |
+| | Express Rate Limit | 7.1.5 |
 | Infrastructure | Base Sepolia | Testnet |
 | | Supabase | PostgreSQL |
 | | Transak | Payment Gateway |
+| | Vercel | Frontend Hosting |
+| | Render | Backend Hosting |
 
 ---
 
@@ -549,22 +632,32 @@ History card shows all past transactions with:
 ```
 microgate-project/
 ├── backend/
-│   ├── server.js              # Express API (329 lines)
+│   ├── server.js              # Express API (400+ lines)
 │   ├── agent.js               # AI agent logic
 │   ├── .env                   # Environment variables
+│   ├── .env.production        # Production config
 │   └── package.json           # Dependencies
 ├── frontend/
 │   ├── src/
-│   │   ├── App.jsx            # Main dashboard (789 lines)
+│   │   ├── App.jsx            # Main dashboard (915 lines)
 │   │   ├── main.jsx           # React entry
-│   │   └── index.css          # Golden ratio styles
+│   │   ├── index.css          # Golden ratio styles
+│   │   ├── components/
+│   │   │   ├── ActivityLog.jsx      # Real-time activity monitor (NEW)
+│   │   │   └── StatusFooter.jsx     # System health monitor (NEW)
+│   │   └── utils/
+│   │       └── invoiceGenerator.js  # PDF invoice creator (NEW)
 │   ├── index.html
 │   ├── .env                   # Frontend config
+│   ├── vercel.json            # Vercel deployment config
 │   └── package.json
 ├── database/
 │   └── supabase-setup.sql     # DB schema (76 lines)
+├── PRODUCTION_FEATURES.md     # Production features docs (NEW)
+├── DEPLOYMENT.md              # Deployment guide
+├── render.yaml                # Render deployment config
 ├── package.json               # Root scripts
-└── README.md                  # This file
+└── README.md                  # This file (738 lines)
 ```
 
 ---

@@ -2,8 +2,8 @@ import { useEffect, useRef } from 'react';
 import { Terminal } from 'lucide-react';
 
 /**
- * ActivityLog Component - Cyberpunk Terminal Style Audit Trail
- * Displays real-time logs with timestamps in a Matrix-style interface
+ * ActivityLog Component - Real-time Activity Monitor
+ * Displays system logs with timestamps matching dashboard theme
  */
 export default function ActivityLog({ logs = [], theme = 'dark' }) {
   const logContainerRef = useRef(null);
@@ -23,52 +23,54 @@ export default function ActivityLog({ logs = [], theme = 'dark' }) {
   return (
     <div style={{
       background: theme === 'dark' 
-        ? 'linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%)'
-        : 'linear-gradient(135deg, #f5f5f5 0%, #e5e5e5 100%)',
-      border: theme === 'dark' ? '2px solid #00ff41' : '2px solid #22c55e',
-      borderRadius: '13px',
-      padding: '21px',
+        ? 'rgba(30, 41, 59, 0.7)'
+        : 'rgba(255, 255, 255, 0.9)',
+      backdropFilter: 'blur(20px)',
+      border: theme === 'dark' ? '1px solid rgba(124, 58, 237, 0.3)' : '1px solid rgba(59, 130, 246, 0.2)',
+      borderRadius: '21px',
+      padding: '34px',
       height: '400px',
       display: 'flex',
       flexDirection: 'column',
       boxShadow: theme === 'dark'
-        ? '0 0 30px rgba(0, 255, 65, 0.3), inset 0 0 20px rgba(0, 255, 65, 0.1)'
-        : '0 4px 20px rgba(0, 0, 0, 0.1)',
+        ? '0 8px 32px rgba(0, 0, 0, 0.4)'
+        : '0 8px 32px rgba(0, 0, 0, 0.1)',
       fontFamily: "'Courier New', monospace",
       position: 'relative',
-      overflow: 'hidden'
+      overflow: 'hidden',
+      transition: 'all 0.3s ease'
     }}>
       {/* Header */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
-        gap: '10px',
-        marginBottom: '15px',
-        paddingBottom: '15px',
-        borderBottom: theme === 'dark' ? '1px solid #00ff41' : '1px solid #22c55e'
+        gap: '13px',
+        marginBottom: '21px',
+        paddingBottom: '21px',
+        borderBottom: theme === 'dark' ? '1px solid rgba(124, 58, 237, 0.3)' : '1px solid rgba(59, 130, 246, 0.2)'
       }}>
         <Terminal 
-          size={20} 
+          size={21} 
           style={{ 
-            color: theme === 'dark' ? '#00ff41' : '#22c55e',
+            color: theme === 'dark' ? '#a78bfa' : '#3b82f6',
             animation: 'pulse 2s ease-in-out infinite'
           }} 
         />
         <h3 style={{
           margin: 0,
-          fontSize: '16px',
-          fontWeight: 'bold',
-          color: theme === 'dark' ? '#00ff41' : '#16a34a',
-          letterSpacing: '1px',
-          textTransform: 'uppercase'
+          fontSize: '20px',
+          fontWeight: '600',
+          color: theme === 'dark' ? '#f1f5f9' : '#1e293b',
+          letterSpacing: '0px'
         }}>
           Activity Monitor
         </h3>
         <div style={{
           marginLeft: 'auto',
-          fontSize: '10px',
-          color: theme === 'dark' ? '#00ff41' : '#16a34a',
-          opacity: 0.7
+          fontSize: '12px',
+          color: theme === 'dark' ? '#cbd5e1' : '#64748b',
+          opacity: 0.8,
+          fontWeight: '500'
         }}>
           {logs.length} EVENTS
         </div>
@@ -84,8 +86,8 @@ export default function ActivityLog({ logs = [], theme = 'dark' }) {
           paddingRight: '10px',
           scrollbarWidth: 'thin',
           scrollbarColor: theme === 'dark' 
-            ? '#00ff41 #1a1a1a' 
-            : '#22c55e #e5e5e5'
+            ? 'rgba(139, 92, 246, 0.5) transparent' 
+            : 'rgba(59, 130, 246, 0.5) transparent'
         }}
       >
         {logs.length === 0 ? (
@@ -94,12 +96,13 @@ export default function ActivityLog({ logs = [], theme = 'dark' }) {
             alignItems: 'center',
             justifyContent: 'center',
             height: '100%',
-            color: theme === 'dark' ? '#00ff41' : '#22c55e',
-            opacity: 0.5,
-            fontSize: '14px'
+            color: theme === 'dark' ? '#cbd5e1' : '#64748b',
+            opacity: 0.6,
+            fontSize: '14px',
+            fontWeight: '500'
           }}>
             <span style={{ animation: 'pulse 1.5s ease-in-out infinite' }}>
-              ▮ AWAITING SYSTEM ACTIVITY...
+              Awaiting activity...
             </span>
           </div>
         ) : (
@@ -107,10 +110,9 @@ export default function ActivityLog({ logs = [], theme = 'dark' }) {
             <div
               key={index}
               style={{
-                marginBottom: '8px',
+                marginBottom: '13px',
                 fontSize: '13px',
                 lineHeight: '1.6',
-                color: theme === 'dark' ? '#00ff41' : '#16a34a',
                 opacity: 0.9,
                 animation: 'fadeIn 0.3s ease-in',
                 display: 'flex',
@@ -118,14 +120,15 @@ export default function ActivityLog({ logs = [], theme = 'dark' }) {
               }}
             >
               <span style={{
-                color: theme === 'dark' ? '#00cc33' : '#15803d',
-                fontWeight: 'bold',
-                minWidth: '70px'
+                color: theme === 'dark' ? '#a78bfa' : '#3b82f6',
+                fontWeight: '600',
+                minWidth: '70px',
+                flexShrink: 0
               }}>
                 [{log.timestamp || formatTimestamp()}]
               </span>
               <span style={{
-                color: theme === 'dark' ? '#00ff41' : '#22c55e',
+                color: theme === 'dark' ? '#f1f5f9' : '#1e293b',
                 wordBreak: 'break-word'
               }}>
                 {log.message || log}
@@ -135,29 +138,16 @@ export default function ActivityLog({ logs = [], theme = 'dark' }) {
         )}
       </div>
 
-      {/* Scanline Effect */}
-      <div style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: theme === 'dark'
-          ? 'repeating-linear-gradient(0deg, rgba(0, 255, 65, 0.03) 0px, rgba(0, 255, 65, 0.03) 1px, transparent 1px, transparent 2px)'
-          : 'repeating-linear-gradient(0deg, rgba(34, 197, 94, 0.02) 0px, rgba(34, 197, 94, 0.02) 1px, transparent 1px, transparent 2px)',
-        pointerEvents: 'none'
-      }} />
-
       {/* Inline Styles for Animations */}
       <style>{`
         @keyframes fadeIn {
           from {
             opacity: 0;
-            transform: translateX(-10px);
+            transform: translateY(-5px);
           }
           to {
             opacity: 0.9;
-            transform: translateX(0);
+            transform: translateY(0);
           }
         }
         
@@ -172,17 +162,17 @@ export default function ActivityLog({ logs = [], theme = 'dark' }) {
 
         /* Custom Scrollbar */
         div::-webkit-scrollbar {
-          width: 6px;
+          width: 8px;
         }
         div::-webkit-scrollbar-track {
-          background: ${theme === 'dark' ? '#1a1a1a' : '#e5e5e5'};
+          background: transparent;
         }
         div::-webkit-scrollbar-thumb {
-          background: ${theme === 'dark' ? '#00ff41' : '#22c55e'};
-          border-radius: 3px;
+          background: ${theme === 'dark' ? 'rgba(139, 92, 246, 0.5)' : 'rgba(59, 130, 246, 0.5)'};
+          border-radius: 4px;
         }
         div::-webkit-scrollbar-thumb:hover {
-          background: ${theme === 'dark' ? '#00cc33' : '#16a34a'};
+          background: ${theme === 'dark' ? 'rgba(139, 92, 246, 0.8)' : 'rgba(59, 130, 246, 0.8)'};
         }
       `}</style>
     </div>
