@@ -186,10 +186,10 @@ function App() {
       const transak = new Transak({
         apiKey: CONFIG.TRANSAK_API_KEY,
         environment: CONFIG.TRANSAK_ENVIRONMENT,
-        defaultCryptoCurrency: 'USDC',
+        defaultCryptoCurrency: 'ETH',
         walletAddress: CONFIG.AGENT_WALLET,
         themeColor: theme === 'dark' ? '7C3AED' : '3B82F6',
-        fiatCurrency: 'INR',
+        fiatCurrency: 'USD',
         email: '',
         redirectURL: '',
         hostURL: window.location.origin,
@@ -197,7 +197,7 @@ function App() {
         widgetWidth: '450px',
         defaultNetwork: 'base_sepolia',
         networks: 'base_sepolia',
-        defaultPaymentMethod: 'upi'
+        exchangeScreenTitle: 'Add Funds to Agent Wallet'
       });
 
       transak.init();
@@ -229,10 +229,12 @@ function App() {
       setError(null);
     } catch (err) {
       console.error('Transak initialization error:', err);
-      if (err.message && err.message.includes('API key')) {
-        setError('❌ Transak API Key Error: Please add localhost:5173 to your API key\'s allowed origins at https://transak.com/');
+      const errorMessage = err.message || '';
+      
+      if (errorMessage.includes('API key') || errorMessage.includes('Invalid')) {
+        setError(`❌ Invalid Transak API Key. Please check:\n1. Key is correct in .env file\n2. Add http://localhost:5173 to allowed origins\n3. Go to: https://global.transak.com/ → Settings → API Keys`);
       } else {
-        setError('Failed to initialize payment widget. Please check API key and try again.');
+        setError('Failed to initialize payment widget. Please check console for details.');
       }
       setTransakInstance(null);
     }
@@ -553,8 +555,44 @@ function App() {
 
       {/* Error Alert */}
       {error && (
-        <div style={{...styles.alert, ...styles.alertError}}>
-          {error}
+        <div style={{
+          ...styles.alert, 
+          ...styles.alertError,
+          position: 'relative',
+          paddingRight: '50px'
+        }}>
+          <div style={{ whiteSpace: 'pre-wrap' }}>{error}</div>
+          <button
+            onClick={() => setError(null)}
+            style={{
+              position: 'absolute',
+              top: '12px',
+              right: '12px',
+              background: 'rgba(255, 255, 255, 0.2)',
+              border: 'none',
+              borderRadius: '50%',
+              width: '28px',
+              height: '28px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              color: 'inherit',
+              fontSize: '20px',
+              fontWeight: 'bold',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = 'rgba(255, 255, 255, 0.3)';
+              e.target.style.transform = 'scale(1.1)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = 'rgba(255, 255, 255, 0.2)';
+              e.target.style.transform = 'scale(1)';
+            }}
+          >
+            ×
+          </button>
         </div>
       )}
 
