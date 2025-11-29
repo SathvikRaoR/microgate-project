@@ -64,8 +64,7 @@ function App() {
 
   // Helper function to add logs
   const addLog = (message) => {
-    const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false });
-    setLogs(prev => [...prev, { message, timestamp }]);
+    setLogs(prev => [...prev, message]);
   };
 
   // Theme toggle
@@ -225,41 +224,31 @@ function App() {
     setLogs([]); // Clear previous logs
 
     try {
-      addLog('[INFO] >>> AGENT ACTIVATION SEQUENCE INITIATED <<<');
-      addLog('[INFO] System: MicroGate v3.5 | Network: Base Sepolia (Chain ID: 84532)');
+      addLog('[INFO] Agent activation started...');
       
       // Check balance first
       if (!balance || parseFloat(balance.formatted) < 0.00015) {
-        addLog('[ERROR] ❌ Balance check failed: Insufficient funds');
+        addLog('[ERROR] ❌ Insufficient balance');
         throw new Error('Insufficient balance. You need at least 0.00015 ETH (including gas fees).');
       }
       
-      addLog('[SUCCESS] ✅ Balance verified: ' + formatBalance(balance) + ' ETH available');
-      addLog('[INFO] Wallet: ' + shortenAddress(CONFIG.AGENT_WALLET));
-      await new Promise(resolve => setTimeout(resolve, 600));
+      addLog('[SUCCESS] ✅ Balance OK: ' + formatBalance(balance) + ' ETH');
+      addLog('[INFO] Preparing transaction...');
+      await new Promise(resolve => setTimeout(resolve, 300));
       
-      addLog('[INFO] 🔐 Step 1/7: Generating idempotency key...');
-      await new Promise(resolve => setTimeout(resolve, 500));
-      addLog('[SUCCESS] ✅ Idempotency key generated: ' + Math.random().toString(36).substring(7));
-      
-      addLog('[INFO] 📋 Step 2/7: Signing transaction payload...');
-      await new Promise(resolve => setTimeout(resolve, 700));
-      addLog('[SUCCESS] ✅ Payload signature: 0x' + Math.random().toString(16).substring(2, 12) + '...');
-      
-      addLog('[INFO] 🔒 Step 3/7: Performing cryptographic verification...');
-      await new Promise(resolve => setTimeout(resolve, 600));
-      addLog('[SUCCESS] ✅ Signature verified using ECDSA');
-      
-      addLog('[INFO] ⛽ Step 4/7: Estimating gas fees...');
-      await new Promise(resolve => setTimeout(resolve, 500));
-      const gasEstimate = (Math.random() * 0.0001 + 0.00005).toFixed(6);
-      addLog('[SUCCESS] ✅ Gas estimation: ' + gasEstimate + ' ETH (~21000 gas units)');
-      
-      addLog('[INFO] 🌐 Step 5/7: Connecting to Base Sepolia RPC...');
+      addLog('[INFO] Signing payload...');
       await new Promise(resolve => setTimeout(resolve, 400));
-      addLog('[SUCCESS] ✅ RPC connection established | Latency: ' + (Math.random() * 30 + 35).toFixed(0) + 'ms');
+      addLog('[SUCCESS] ✅ Payload signed');
       
-      addLog('[INFO] 🚀 Step 6/7: Broadcasting transaction to mempool...');
+      addLog('[INFO] Estimating gas...');
+      await new Promise(resolve => setTimeout(resolve, 300));
+      addLog('[SUCCESS] ✅ Gas estimated');
+      
+      addLog('[INFO] Connecting to RPC...');
+      await new Promise(resolve => setTimeout(resolve, 300));
+      addLog('[SUCCESS] ✅ RPC connected');
+      
+      addLog('[INFO] Sending transaction...');
 
       const response = await fetch(`${CONFIG.BACKEND_URL}/api/trigger-agent`, {
         method: 'POST',
@@ -281,16 +270,14 @@ function App() {
       }
 
       const data = await response.json();
-      addLog('[INFO] 📦 Step 7/7: Verifying transaction on blockchain...');
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      addLog('[INFO] Verifying transaction...');
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       if (data.success) {
         const txHash = data.data?.transactionHash || data.data?.paymentTxHash;
-        addLog('[SUCCESS] ✅ Transaction confirmed on Base Sepolia!');
-        addLog('[SUCCESS] 🔗 TX Hash: ' + (txHash || 'N/A'));
-        addLog('[SUCCESS] 💾 Transaction recorded in database');
-        addLog('[SUCCESS] 🎉 AGENT EXECUTION COMPLETED SUCCESSFULLY!');
-        addLog('[INFO] View on BaseScan: https://sepolia.basescan.org/tx/' + txHash);
+        addLog('[SUCCESS] ✅ Transaction confirmed!');
+        addLog('[SUCCESS] TX: ' + (txHash ? txHash.slice(0, 10) + '...' : 'N/A'));
+        addLog('[SUCCESS] 🎉 Agent execution complete!');
         
         setAgentStatus('success');
         setAgentResult(data.data);
@@ -307,7 +294,7 @@ function App() {
       }
     } catch (err) {
       console.error('Agent error:', err);
-      addLog('[ERROR] ❌ EXECUTION FAILED: ' + err.message);
+      addLog('[ERROR] ❌ ' + err.message);
       setAgentStatus('error');
       setError(`❌ ${err.message}`);
     }
@@ -560,7 +547,7 @@ function App() {
         {/* Mission Control Grid Layout - Left: Controls | Right: Terminal */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: '380px 1fr',
+          gridTemplateColumns: window.innerWidth > 1024 ? '400px 1fr' : '1fr',
           gap: `${21}px`,
           marginBottom: `${34}px`,
           alignItems: 'start'
@@ -758,12 +745,11 @@ function App() {
             </div>
           </div>
 
-          {/* Right Column - Activity Terminal (Full Height) */}
+          {/* Right Column - Activity Terminal */}
           <div style={{
             border: theme === 'dark' ? '1px solid #22c55e' : '1px solid #10b981',
             borderRadius: `${21}px`,
-            overflow: 'hidden',
-            height: '600px'
+            overflow: 'hidden'
           }}>
             <ActivityTerminal logs={logs} theme={theme} />
           </div>

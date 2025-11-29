@@ -54,24 +54,32 @@ export default function ActivityTerminal({ logs = [], theme = 'dark' }) {
     });
   };
 
+  // Extract actual log message if it's an object with message property
+  const getLogMessage = (log) => {
+    if (typeof log === 'string') return log;
+    if (log && typeof log === 'object' && log.message) return log.message;
+    return String(log);
+  };
+
   // Parse log for special formatting (e.g., [SUCCESS], [ERROR], [INFO])
   const formatLog = (log, index) => {
+    const logMessage = getLogMessage(log);
     const timestamp = getTimestamp();
     
     // Color coding based on log type
     let textColor = 'text-green-400';
     let prefix = '>';
     
-    if (log.includes('[ERROR]') || log.includes('❌')) {
+    if (logMessage.includes('[ERROR]') || logMessage.includes('❌')) {
       textColor = 'text-red-400';
       prefix = '✗';
-    } else if (log.includes('[SUCCESS]') || log.includes('✅')) {
+    } else if (logMessage.includes('[SUCCESS]') || logMessage.includes('✅')) {
       textColor = 'text-green-400';
       prefix = '✓';
-    } else if (log.includes('[INFO]') || log.includes('ℹ️')) {
+    } else if (logMessage.includes('[INFO]') || logMessage.includes('ℹ️')) {
       textColor = 'text-cyan-400';
       prefix = 'ℹ';
-    } else if (log.includes('[WARN]') || log.includes('⚠️')) {
+    } else if (logMessage.includes('[WARN]') || logMessage.includes('⚠️')) {
       textColor = 'text-yellow-400';
       prefix = '⚠';
     }
@@ -87,7 +95,7 @@ export default function ActivityTerminal({ logs = [], theme = 'dark' }) {
       >
         <span className="text-gray-500">[{timestamp}]</span>
         <span className={`${textColor} mx-2`}>{prefix}</span>
-        <span className={textColor}>{log}</span>
+        <span className={textColor}>{logMessage}</span>
       </div>
     );
   };
@@ -118,8 +126,8 @@ export default function ActivityTerminal({ logs = [], theme = 'dark' }) {
           isDark ? 'bg-black text-green-400' : 'bg-white text-gray-800'
         }`}
         style={{ 
-          minHeight: '300px',
-          maxHeight: '600px'
+          minHeight: '400px',
+          maxHeight: '500px'
         }}
       >
         {displayedLogs.length === 0 ? (
