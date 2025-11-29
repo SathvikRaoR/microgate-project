@@ -284,10 +284,16 @@ function App() {
   };
 
   const handleDownloadInvoice = () => {
-    if (!agentResult) return;
+    if (!agentResult) {
+      addLog('❌ No transaction data available');
+      setError('No transaction data available');
+      setTimeout(() => setError(null), 3000);
+      return;
+    }
+    
     addLog('📄 Generating PDF invoice...');
     try {
-      generateInvoice(
+      const result = generateInvoice(
         agentResult.transactionHash || 'N/A',
         CONFIG.MIN_ETH_AMOUNT.toString(),
         CONFIG.AGENT_WALLET,
@@ -296,13 +302,14 @@ function App() {
           secret: agentResult.secret || 'N/A'
         }
       );
-      addLog('✅ Invoice downloaded successfully');
+      addLog(`✅ Invoice downloaded: ${result}`);
       setSuccess('📄 Invoice downloaded!');
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
-      addLog('❌ Failed to generate invoice');
-      setError('Failed to generate invoice');
-      setTimeout(() => setError(null), 3000);
+      console.error('Invoice generation error:', err);
+      addLog(`❌ Failed to generate invoice: ${err.message}`);
+      setError(`Failed to generate invoice: ${err.message}`);
+      setTimeout(() => setError(null), 5000);
     }
   };
 

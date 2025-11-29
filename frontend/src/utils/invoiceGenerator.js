@@ -10,12 +10,13 @@ import 'jspdf-autotable';
  * @returns {void} - Downloads PDF automatically
  */
 export function generateInvoice(txHash, amount, agentAddress, additionalData = {}) {
-  const doc = new jsPDF();
-  
-  // Colors
-  const primaryColor = [124, 58, 237]; // Purple
-  const secondaryColor = [100, 100, 100]; // Gray
-  const accentColor = [34, 197, 94]; // Green
+  try {
+    const doc = new jsPDF();
+    
+    // Colors
+    const primaryColor = [124, 58, 237]; // Purple
+    const secondaryColor = [100, 100, 100]; // Gray
+    const accentColor = [34, 197, 94]; // Green
   
   // Header Section
   doc.setFillColor(...primaryColor);
@@ -156,6 +157,10 @@ export function generateInvoice(txHash, amount, agentAddress, additionalData = {
   doc.save(filename);
   
   return filename;
+  } catch (error) {
+    console.error('PDF Generation Error:', error);
+    throw new Error(`PDF generation failed: ${error.message}`);
+  }
 }
 
 /**
