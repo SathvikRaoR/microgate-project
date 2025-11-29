@@ -91,7 +91,7 @@ async function waitForConfirmation(hash) {
 export async function runAgent() {
   console.log('🤖 Agent Starting...');
   console.log(`📍 Agent Wallet: ${account.address}`);
-  console.log(`🌐 API Endpoint: ${CONFIG.API_URL}/api/secret`);
+  console.log(`🌐 API Endpoint: ${CONFIG.API_URL}/api/premium-data`);
 
   try {
     // Check wallet balance
@@ -100,15 +100,15 @@ export async function runAgent() {
     console.log(`💰 Current Balance: ${balanceInEth.toFixed(6)} ETH`);
 
     const requiredAmount = parseFloat(CONFIG.PAYMENT_AMOUNT);
-    const minBalanceNeeded = requiredAmount * 1.5; // Account for gas fees
+    const minBalanceNeeded = requiredAmount + 0.00005; // Just need payment + small gas buffer
     
     if (balanceInEth < minBalanceNeeded) {
       throw new Error(`Insufficient balance. Required: ${requiredAmount} ETH + gas, Available: ${balanceInEth.toFixed(6)} ETH. Please add more ETH to your wallet.`);
     }
 
-    // Step 1: Try to access the secret
-    console.log('\n📡 Attempting to access /api/secret...');
-    const response = await fetchWithRetry(`${CONFIG.API_URL}/api/secret`);
+    // Step 1: Try to access the premium data
+    console.log('\n📡 Attempting to access /api/premium-data...');
+    const response = await fetchWithRetry(`${CONFIG.API_URL}/api/premium-data`);
     
     if (response.status === 402) {
       const data = await response.json();
@@ -138,7 +138,7 @@ export async function runAgent() {
       // Step 3: Retry with payment proof
       console.log('\n🔓 Retrying with payment proof...');
       
-      const retryResponse = await fetchWithRetry(`${CONFIG.API_URL}/api/secret`, {
+      const retryResponse = await fetchWithRetry(`${CONFIG.API_URL}/api/premium-data`, {
         headers: {
           'x-payment-hash': hash
         }
@@ -147,24 +147,26 @@ export async function runAgent() {
       if (retryResponse.ok) {
         const secretData = await retryResponse.json();
         console.log('\n🎉 SUCCESS!');
-        console.log(`🔐 Secret Revealed: "${secretData.secret}"`);
-        console.log(`📜 Transaction: ${secretData.transactionHash}`);
-        console.log(`✓ Verified: ${secretData.verified}`);
+        console.log(`🔐 Premium Data: "${secretData.data?.secret || secretData.secret}"`);
+        console.log(`📜 Transaction: ${secretData.transaction?.hash || hash}`);
+        console.log(`✓ Verified: ${secretData.data?.verified || true}`);
+        console.log(`🔗 View on BaseScan: https://sepolia.basescan.org/tx/${hash}`);
         
         // Return success data
         return {
           success: true,
           data: {
-            secret: secretData.secret,
-            transactionHash: secretData.transactionHash,
-            verified: secretData.verified,
+            secret: secretData.data?.secret || secretData.secret,
+            transactionHash: hash,
+            verified: true,
             paymentAmount: CONFIG.PAYMENT_AMOUNT,
-            gasUsed: receipt.gasUsed.toString()
+            gasUsed: receipt.gasUsed.toString(),
+            paymentTxHash: hash
           }
         };
       } else {
         const errorData = await retryResponse.json();
-        throw new Error(errorData.error || 'Failed to access secret after payment');
+        throw new Error(errorData.error || 'Failed to access premium data after payment');
       }
 
     } else if (response.ok) {
