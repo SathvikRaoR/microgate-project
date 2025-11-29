@@ -1,53 +1,220 @@
-/* Base Reset & Cyberpunk Animations */
+/* Base Reset & Premium Animations */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
-  font-family: 'Courier New', Courier, monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
-  transition: background 0.3s ease, color 0.3s ease;
+  transition: background 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 #root {
   min-height: 100vh;
+  position: relative;
 }
 
-/* Pulse animation for loading */
+
+/* Premium Animations */
 @keyframes pulse {
   0%, 100% {
     opacity: 1;
+    transform: scale(1);
   }
   50% {
-    opacity: 0.5;
+    opacity: 0.7;
+    transform: scale(1.05);
   }
 }
 
-/* Glitch effect */
-@keyframes glitch {
+@keyframes shimmer {
   0% {
-    text-shadow: 0 0 10px #00ff41, 0 0 20px #00ff41;
-  }
-  25% {
-    text-shadow: -2px 0 10px #ff0066, 2px 0 20px #00ff41;
-  }
-  50% {
-    text-shadow: 0 0 10px #00ff41, 0 0 20px #00ff41;
-  }
-  75% {
-    text-shadow: 2px 0 10px #00ff41, -2px 0 20px #00ccff;
+    transform: translateX(-100%);
   }
   100% {
-    text-shadow: 0 0 10px #00ff41, 0 0 20px #00ff41;
+    transform: translateX(100%);
   }
 }
 
-/* Fade in animation */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(2deg);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(124, 58, 237, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(124, 58, 237, 0.8), 0 0 60px rgba(236, 72, 153, 0.6);
+  }
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Utility Classes */
+.animate-pulse {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+}
+
+.animate-glow {
+  animation: glow 3s ease-in-out infinite;
+}
+
+/* Smooth Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.3);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+  border-radius: 5px;
+  transition: all 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
+}
+
+/* Selection Styling */
+::selection {
+  background: rgba(124, 58, 237, 0.3);
+  color: #ffffff;
+}
+
+::-moz-selection {
+  background: rgba(124, 58, 237, 0.3);
+  color: #ffffff;
+}
+
+/* Focus States */
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid #7c3aed;
+  outline-offset: 2px;
+}
+
+/* Card Hover Effects */
+.card-hover {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-hover:hover {
+  transform: translateY(-4px);
+}
+
+/* Glass Effect */
+.glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Gradient Text */
+.gradient-text {
+  background: linear-gradient(135deg, #e0d4ff 0%, #ff6ec7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Disable text selection on buttons */
+button {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Smooth transitions for all interactive elements */
+a, button, input, textarea, select {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;

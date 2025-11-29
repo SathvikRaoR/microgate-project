@@ -2,50 +2,31 @@ import { useState, useEffect, useCallback } from 'react'
 import { createPublicClient, http, formatEther } from 'viem'
 import { baseSepolia } from 'viem/chains'
 import { Transak } from '@transak/transak-sdk'
-import { Sun, Moon, Zap, Wallet, Activity, ExternalLink, CheckCircle2, Download } from 'lucide-react'
+import { Sun, Moon, Zap, Wallet, Activity, ExternalLink, CheckCircle2, Download, Sparkles, TrendingUp, Shield } from 'lucide-react'
 import ActivityTerminal from './components/ActivityTerminal'
 import TransactionHistory from './components/TransactionHistory'
 import SystemStatus from './components/SystemStatus'
 import { generateInvoice } from './utils/invoiceGenerator'
 
-// Configuration - Production & Development
+// Configuration
 const CONFIG = {
   AGENT_WALLET: import.meta.env.VITE_AGENT_WALLET_ADDRESS || '0x8f4e057c5ae678b68bb9c8d679e6524ac2ec7ebc',
   BACKEND_URL: import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000',
-  TRANSAK_API_KEY: import.meta.env.VITE_TRANSAK_API_KEY || '3fd3ee4e-dd3c-49be-89bc-7bd527402ddf',
+  TRANSAK_API_KEY: import.meta.env.VITE_TRANSAK_API_KEY || '4fcd6904-706b-4aff-bd9d-77422813bbb9',
   TRANSAK_ENVIRONMENT: import.meta.env.VITE_TRANSAK_ENV || 'STAGING',
   BALANCE_REFRESH_DELAY: 5000,
-  RPC_URL: import.meta.env.VITE_RPC_URL || 'https://sepolia.base.org'
+  RPC_URL: import.meta.env.VITE_RPC_URL || 'https://sepolia.base.org',
+  MIN_ETH_AMOUNT: 0.0001 // Match backend requirement
 };
 
-// Log configuration in development
-if (import.meta.env.DEV) {
-  console.log('🔧 MicroGate Config:', {
-    backendUrl: CONFIG.BACKEND_URL,
-    agentWallet: CONFIG.AGENT_WALLET,
-    rpcUrl: CONFIG.RPC_URL
-  });
-}
-
-// Create public client for reading blockchain data
 const publicClient = createPublicClient({
   chain: baseSepolia,
   transport: http(CONFIG.RPC_URL)
 });
 
-// Golden Ratio constant
-const PHI = 1.618;
-
 function App() {
-  // Theme state
-  const [theme, setTheme] = useState(() => {
-    return localStorage.getItem('microgate-theme') || 'dark';
-  });
-
-  // Responsive state
+  const [theme, setTheme] = useState(() => localStorage.getItem('microgate-theme') || 'dark');
   const [isDesktop, setIsDesktop] = useState(true);
-
-  // Existing states
   const [transakInstance, setTransakInstance] = useState(null);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -53,39 +34,30 @@ function App() {
   const [balance, setBalance] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
-  const [agentStatus, setAgentStatus] = useState('idle'); // idle, activating, success, error
+  const [agentStatus, setAgentStatus] = useState('idle');
   const [agentResult, setAgentResult] = useState(null);
-  
-  // Transaction history states
   const [transactions, setTransactions] = useState([]);
   const [loadingTransactions, setLoadingTransactions] = useState(false);
-
-  // Activity Log state
   const [logs, setLogs] = useState([]);
 
-  // Helper function to add logs
   const addLog = (message) => {
     setLogs(prev => [...prev, message]);
   };
 
-  // Theme toggle
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
     setTheme(newTheme);
     localStorage.setItem('microgate-theme', newTheme);
   };
 
-  // Fetch transaction history
   const fetchTransactions = useCallback(async () => {
     if (!CONFIG.AGENT_WALLET) return;
-    
     setLoadingTransactions(true);
     try {
       const response = await fetch(
         `${CONFIG.BACKEND_URL}/api/transactions?agent_address=${CONFIG.AGENT_WALLET}`
       );
       const data = await response.json();
-      
       if (data.success) {
         setTransactions(data.transactions || []);
       }
@@ -96,13 +68,11 @@ function App() {
     }
   }, []);
 
-  // Fetch balance using viem
   const fetchBalance = useCallback(async () => {
     if (!CONFIG.AGENT_WALLET || !CONFIG.AGENT_WALLET.startsWith('0x')) {
       setIsLoading(false);
       return;
     }
-
     try {
       setIsLoading(true);
       setIsError(false);
@@ -124,17 +94,11 @@ function App() {
 
   const refetch = fetchBalance;
 
-  // Check if wallet address is configured and fetch initial balance
   useEffect(() => {
-    // Handle responsive layout
     const handleResize = () => {
       setIsDesktop(window.innerWidth > 1024);
     };
-    
-    // Set initial value
     handleResize();
-    
-    // Add resize listener
     window.addEventListener('resize', handleResize);
     
     const configured = CONFIG.AGENT_WALLET && 
@@ -147,22 +111,16 @@ function App() {
     } else {
       fetchBalance();
       fetchTransactions();
-      // Auto-refresh balance every 30 seconds
       const interval = setInterval(() => {
         fetchBalance();
         fetchTransactions();
       }, 30000);
-      
       return () => {
         clearInterval(interval);
         window.removeEventListener('resize', handleResize);
       };
     }
-    
-    // Cleanup resize listener even if not configured
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
+    return () => window.removeEventListener('resize', handleResize);
   }, [fetchBalance, fetchTransactions]);
 
   const handleAddFunds = useCallback(() => {
@@ -170,8 +128,6 @@ function App() {
       setError('Please configure VITE_TRANSAK_API_KEY in .env file');
       return;
     }
-
-    // Close any existing Transak instance
     if (transakInstance) {
       try {
         transakInstance.close();
@@ -179,7 +135,6 @@ function App() {
         console.log('Error closing previous instance:', e);
       }
     }
-
     try {
       const transak = new Transak({
         apiKey: CONFIG.TRANSAK_API_KEY,
@@ -228,7 +183,6 @@ function App() {
     } catch (err) {
       console.error('Transak initialization error:', err);
       const errorMessage = err.message || '';
-      
       if (errorMessage.includes('API key') || errorMessage.includes('Invalid')) {
         setError(`❌ Invalid Transak API Key. Please check:\n1. Key is correct in .env file\n2. Add http://localhost:5173 to allowed origins\n3. Go to: https://global.transak.com/ → Settings → API Keys`);
       } else {
@@ -238,21 +192,21 @@ function App() {
     }
   }, [theme, fetchBalance, transakInstance]);
 
-  // Activate Agent
   const handleActivateAgent = async () => {
     setAgentStatus('activating');
     setError(null);
     setSuccess(null);
     setAgentResult(null);
-    setLogs([]); // Clear previous logs
+    setLogs([]);
 
     try {
       addLog('[INFO] Agent activation started...');
       
-      // Check balance first
-      if (!balance || parseFloat(balance.formatted) < 0.00015) {
+      // Updated balance check to match backend requirement
+      const minRequired = CONFIG.MIN_ETH_AMOUNT + 0.00005; // 0.0001 + gas buffer
+      if (!balance || parseFloat(balance.formatted) < minRequired) {
         addLog('[ERROR] ❌ Insufficient balance');
-        throw new Error('Insufficient balance. You need at least 0.00015 ETH (including gas fees).');
+        throw new Error(`Insufficient balance. Required: ${minRequired} ETH (0.0001 ETH + gas), Available: ${balance ? balance.formatted : '0'} ETH`);
       }
       
       addLog('[SUCCESS] ✅ Balance OK: ' + formatBalance(balance) + ' ETH');
@@ -306,7 +260,6 @@ function App() {
         setAgentResult(data.data);
         setSuccess('✅ Agent executed successfully!');
         
-        // Refresh balance and transactions after agent completes
         setTimeout(() => {
           fetchBalance();
           fetchTransactions();
@@ -323,23 +276,19 @@ function App() {
     }
   };
 
-  // Download Invoice Handler
   const handleDownloadInvoice = () => {
     if (!agentResult) return;
-    
     addLog('📄 Generating PDF invoice...');
-    
     try {
       generateInvoice(
         agentResult.transactionHash || 'N/A',
-        CONFIG.MIN_ETH_AMOUNT || '0.0001',
+        CONFIG.MIN_ETH_AMOUNT.toString(),
         CONFIG.AGENT_WALLET,
         {
           gasUsed: agentResult.gasUsed || 'N/A',
           secret: agentResult.secret || 'N/A'
         }
       );
-      
       addLog('✅ Invoice downloaded successfully');
       setSuccess('📄 Invoice downloaded!');
       setTimeout(() => setSuccess(null), 3000);
@@ -360,504 +309,819 @@ function App() {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
 
-  const maskAddress = (address) => {
-    if (!address || address.length < 10) return address;
-    const start = address.slice(0, 6);
-    const end = address.slice(-4);
-    const middle = '•'.repeat(address.length - 10);
-    return `${start}${middle}${end}`;
-  };
-
-  // Theme-based styles using golden ratio for spacing
-  const styles = {
-    // PHI-based spacing: 8px, 13px, 21px, 34px, 55px (Fibonacci sequence approximating PHI)
-    container: {
-      minHeight: '100vh',
-      background: theme === 'dark' 
-        ? 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)'
-        : 'linear-gradient(135deg, #f8fafc 0%, #e0e7ff 50%, #f8fafc 100%)',
-      color: theme === 'dark' ? '#f1f5f9' : '#1e293b',
-      transition: 'all 0.3s ease',
-      padding: `${34}px ${21}px`,
-      paddingBottom: `${80}px` // Add space for SystemStatus footer
-    },
-    themeToggle: {
-      position: 'fixed',
-      top: `${21}px`,
-      right: `${21}px`,
-      zIndex: 1000,
-      background: theme === 'dark' ? 'rgba(124, 58, 237, 0.2)' : 'rgba(59, 130, 246, 0.2)',
-      border: theme === 'dark' ? '1px solid #7c3aed' : '1px solid #3b82f6',
-      color: theme === 'dark' ? '#a78bfa' : '#3b82f6',
-      padding: `${13}px`,
-      borderRadius: `${13}px`,
-      cursor: 'pointer',
-      backdropFilter: 'blur(10px)',
-      boxShadow: theme === 'dark' 
-        ? '0 4px 20px rgba(124, 58, 237, 0.3)'
-        : '0 4px 20px rgba(59, 130, 246, 0.3)',
-      transition: 'all 0.3s ease'
-    },
-    header: {
-      textAlign: 'center',
-      marginBottom: `${55}px`, // PHI spacing
-      paddingTop: `${21}px`
-    },
-    title: {
-      fontSize: '64px',
-      fontWeight: 'bold',
-      background: theme === 'dark'
-        ? 'linear-gradient(135deg, #e0d4ff 0%, #ff6ec7 100%)'
-        : 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
-      WebkitBackgroundClip: 'text',
-      WebkitTextFillColor: 'transparent',
-      MozBackgroundClip: 'text',
-      MozTextFillColor: 'transparent',
-      backgroundClip: 'text',
-      marginBottom: `${13}px`,
-      letterSpacing: '-0.02em',
-      display: 'inline-block'
-    },
-    subtitle: {
-      fontSize: '18px',
-      color: theme === 'dark' ? '#cbd5e1' : '#64748b',
-      fontWeight: '500'
-    },
-    alert: {
-      maxWidth: '1000px',
-      margin: `0 auto ${21}px`,
-      padding: `${13}px ${21}px`,
-      borderRadius: `${13}px`,
-      border: '1px solid',
-      backdropFilter: 'blur(10px)',
-      fontSize: '15px',
-      fontWeight: '500'
-    },
-    alertError: {
-      background: theme === 'dark' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(239, 68, 68, 0.15)',
-      borderColor: '#ef4444',
-      color: theme === 'dark' ? '#fca5a5' : '#dc2626'
-    },
-    alertSuccess: {
-      background: theme === 'dark' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(34, 197, 94, 0.15)',
-      borderColor: '#22c55e',
-      color: theme === 'dark' ? '#86efac' : '#16a34a'
-    },
-    mainContainer: {
-      maxWidth: `${1000}px`, // ~PHI * 618
-      margin: '0 auto'
-    },
-    card: {
-      background: theme === 'dark' 
-        ? 'rgba(30, 41, 59, 0.7)'
-        : 'rgba(255, 255, 255, 0.9)',
-      backdropFilter: 'blur(20px)',
-      borderRadius: `${21}px`,
-      padding: `${34}px`,
-      marginBottom: `${34}px`,
-      border: theme === 'dark' ? '1px solid rgba(124, 58, 237, 0.3)' : '1px solid rgba(59, 130, 246, 0.2)',
-      boxShadow: theme === 'dark'
-        ? '0 8px 32px rgba(0, 0, 0, 0.4)'
-        : '0 8px 32px rgba(0, 0, 0, 0.1)',
-      transition: 'all 0.3s ease'
-    },
-    cardHeader: {
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginBottom: `${21}px`
-    },
-    cardTitle: {
-      fontSize: '20px',
-      fontWeight: '600',
-      display: 'flex',
-      alignItems: 'center',
-      gap: `${13}px`,
-      color: theme === 'dark' ? '#f1f5f9' : '#1e293b'
-    },
-    statusDot: {
-      width: `${8}px`,
-      height: `${8}px`,
-      borderRadius: '50%',
-      animation: 'pulse 2s infinite'
-    },
-    button: {
-      width: '100%',
-      padding: `${13}px ${21}px`,
-      borderRadius: `${13}px`,
-      border: 'none',
-      fontWeight: '600',
-      fontSize: '15px',
-      cursor: 'pointer',
-      transition: 'all 0.3s ease',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: `${8}px`
-    },
-    buttonPrimary: {
-      background: theme === 'dark'
-        ? 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)'
-        : 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
-      color: '#ffffff',
-      boxShadow: theme === 'dark'
-        ? '0 4px 20px rgba(124, 58, 237, 0.4)'
-        : '0 4px 20px rgba(59, 130, 246, 0.4)'
-    },
-    buttonSecondary: {
-      background: theme === 'dark' ? 'rgba(51, 65, 85, 0.8)' : 'rgba(226, 232, 240, 0.8)',
-      color: theme === 'dark' ? '#f1f5f9' : '#1e293b'
-    },
-    txLink: {
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: `${8}px`,
-      padding: `${13}px ${21}px`,
-      background: theme === 'dark'
-        ? 'rgba(34, 197, 94, 0.1)'
-        : 'rgba(34, 197, 94, 0.15)',
-      border: '1px solid #22c55e',
-      borderRadius: `${13}px`,
-      color: theme === 'dark' ? '#86efac' : '#16a34a',
-      textDecoration: 'none',
-      fontWeight: '600',
-      fontSize: `${13}px`,
-      transition: 'all 0.3s ease',
-      marginTop: `${21}px`,
-      backdropFilter: 'blur(10px)'
-    },
-    infoBox: {
-      background: theme === 'dark' ? 'rgba(15, 23, 42, 0.6)' : 'rgba(241, 245, 249, 0.6)',
-      borderRadius: `${13}px`,
-      padding: `${21}px`,
-      marginBottom: `${13}px`
-    }
-  };
-
   return (
-    <div style={styles.container}>
-      {/* Theme Toggle Button */}
-      <button 
-        onClick={toggleTheme}
-        style={styles.themeToggle}
-        aria-label="Toggle theme"
-      >
-        {theme === 'dark' ? <Sun size={21} /> : <Moon size={21} />}
-      </button>
+    <>
+      {/* Background with animated gradient */}
+      <div style={{
+        position: 'fixed',
+        inset: 0,
+        background: theme === 'dark' 
+          ? 'radial-gradient(circle at 20% 50%, rgba(124, 58, 237, 0.15) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(236, 72, 153, 0.15) 0%, transparent 50%), linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)'
+          : 'radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 50%), linear-gradient(135deg, #f8fafc 0%, #e0e7ff 50%, #f8fafc 100%)',
+        zIndex: -1
+      }} />
 
-      {/* Header */}
-      <div style={styles.header}>
-        <h1 style={styles.title}>⚡ MicroGate</h1>
-        <p style={styles.subtitle}>AI Agent Payment Dashboard on Base Sepolia</p>
-      </div>
+      <div style={{
+        minHeight: '100vh',
+        color: theme === 'dark' ? '#f1f5f9' : '#1e293b',
+        padding: '40px 24px 100px',
+        position: 'relative'
+      }}>
+        {/* Floating Theme Toggle */}
+        <button 
+          onClick={toggleTheme}
+          style={{
+            position: 'fixed',
+            top: '24px',
+            right: '24px',
+            zIndex: 1000,
+            background: theme === 'dark' ? 'rgba(124, 58, 237, 0.1)' : 'rgba(59, 130, 246, 0.1)',
+            border: theme === 'dark' ? '2px solid rgba(124, 58, 237, 0.3)' : '2px solid rgba(59, 130, 246, 0.3)',
+            color: theme === 'dark' ? '#c4b5fd' : '#3b82f6',
+            padding: '16px',
+            borderRadius: '50%',
+            cursor: 'pointer',
+            backdropFilter: 'blur(16px)',
+            boxShadow: theme === 'dark' 
+              ? '0 8px 32px rgba(124, 58, 237, 0.2)'
+              : '0 8px 32px rgba(59, 130, 246, 0.2)',
+            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'scale(1.1) rotate(15deg)';
+            e.currentTarget.style.boxShadow = theme === 'dark'
+              ? '0 12px 48px rgba(124, 58, 237, 0.4)'
+              : '0 12px 48px rgba(59, 130, 246, 0.4)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'scale(1) rotate(0deg)';
+            e.currentTarget.style.boxShadow = theme === 'dark'
+              ? '0 8px 32px rgba(124, 58, 237, 0.2)'
+              : '0 8px 32px rgba(59, 130, 246, 0.2)';
+          }}
+        >
+          {theme === 'dark' ? <Sun size={24} /> : <Moon size={24} />}
+        </button>
 
-      {/* Error Alert */}
-      {error && (
-        <div style={{
-          ...styles.alert, 
-          ...styles.alertError,
-          position: 'relative',
-          paddingRight: '50px'
-        }}>
-          <div style={{ whiteSpace: 'pre-wrap' }}>{error}</div>
-          <button
-            onClick={() => setError(null)}
-            style={{
-              position: 'absolute',
-              top: '12px',
-              right: '12px',
-              background: 'rgba(255, 255, 255, 0.2)',
-              border: 'none',
-              borderRadius: '50%',
-              width: '28px',
-              height: '28px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              color: 'inherit',
-              fontSize: '20px',
-              fontWeight: 'bold',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.background = 'rgba(255, 255, 255, 0.3)';
-              e.target.style.transform = 'scale(1.1)';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.background = 'rgba(255, 255, 255, 0.2)';
-              e.target.style.transform = 'scale(1)';
-            }}
-          >
-            ×
-          </button>
-        </div>
-      )}
-
-      {/* Success Alert */}
-      {success && (
-        <div style={{...styles.alert, ...styles.alertSuccess}}>
-          {success}
-        </div>
-      )}
-
-      {/* Main Dashboard */}
-      <div style={styles.mainContainer}>
-        {/* Mission Control Grid Layout - Left: Controls | Right: Terminal */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: isDesktop ? '400px 1fr' : '1fr',
-          gap: `${21}px`,
-          marginBottom: `${34}px`,
-          alignItems: 'start'
-        }}>
-          {/* Left Column - Control Panel */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: `${21}px` }}>
-            {/* Agent Balance Card */}
-            <div style={styles.card}>
-          <div style={styles.cardHeader}>
-            <h2 style={styles.cardTitle}>
-              <Wallet size={21} />
-              Agent Balance
-            </h2>
-            <div style={{display: 'flex', alignItems: 'center', gap: `${8}px`}}>
-              <div style={{
-                ...styles.statusDot,
-                background: isConfigured ? '#22c55e' : '#ef4444'
-              }}></div>
-              <span style={{fontSize: '14px', color: theme === 'dark' ? '#cbd5e1' : '#64748b', fontWeight: '500'}}>
-                {isConfigured ? 'Live' : 'Not Configured'}
-              </span>
-            </div>
-          </div>
-
-          <div style={styles.infoBox}>
-            <p style={{fontSize: '14px', color: theme === 'dark' ? '#cbd5e1' : '#64748b', marginBottom: `${8}px`, fontWeight: '600'}}>
-              Wallet Address
-            </p>
-            <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: `${8}px`}}>
-              <p style={{fontFamily: 'monospace', fontSize: '15px', color: theme === 'dark' ? '#c4b5fd' : '#7c3aed', fontWeight: '600'}}>
-                {shortenAddress(CONFIG.AGENT_WALLET)}
-              </p>
-              <p style={{fontSize: '11px', fontFamily: 'monospace', color: theme === 'dark' ? '#94a3b8' : '#64748b', wordBreak: 'break-all', letterSpacing: '0.5px'}}>
-                {maskAddress(CONFIG.AGENT_WALLET)}
-              </p>
-            </div>
-          </div>
-
+        {/* Premium Header with SVG Icon */}
+        <div style={{ textAlign: 'center', marginBottom: '64px', paddingTop: '32px' }}>
           <div style={{
-            background: theme === 'dark'
-              ? 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)'
-              : 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
-            borderRadius: `${13}px`,
-            padding: `${21}px`,
-            marginBottom: `${13}px`
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '16px',
+            marginBottom: '16px'
           }}>
-            <p style={{fontSize: '14px', color: 'rgba(255, 255, 255, 0.95)', marginBottom: `${8}px`, fontWeight: '600'}}>
-              Current Balance
-            </p>
-            {isLoading ? (
-              <div style={{display: 'flex', alignItems: 'center', gap: `${13}px`}}>
-                <Activity size={34} className="animate-spin" style={{color: 'rgba(255, 255, 255, 0.7)'}} />
-                <span style={{fontSize: '22px', color: 'rgba(255, 255, 255, 0.95)', fontWeight: '500'}}>Loading...</span>
-              </div>
-            ) : isError ? (
-              <p style={{fontSize: '22px', fontWeight: 'bold', color: '#fca5a5'}}>
-                Error loading balance
-              </p>
-            ) : (
-              <div>
-                <p style={{fontSize: '56px', fontWeight: 'bold', color: '#ffffff', lineHeight: 1}}>
-                  {formatBalance(balance)}
-                </p>
-                <p style={{fontSize: '15px', color: 'rgba(255, 255, 255, 0.9)', marginTop: `${8}px`, fontWeight: '500'}}>
-                  {balance?.symbol || 'ETH'} on Base Sepolia
-                </p>
-              </div>
-            )}
-          </div>
-
-          <button
-            onClick={() => refetch()}
-            disabled={isLoading}
-            style={{...styles.button, ...styles.buttonSecondary}}
-          >
-            <Activity size={13} />
-            {isLoading ? 'Refreshing...' : 'Refresh Balance'}
-          </button>
-        </div>
-
-        {/* Activate Agent Card */}
-        <div style={styles.card}>
-          <div style={styles.cardHeader}>
-            <h2 style={styles.cardTitle}>
-              <Zap size={21} />
-              Activate Agent
-            </h2>
-          </div>
-
-          <p style={{color: theme === 'dark' ? '#cbd5e1' : '#64748b', marginBottom: `${21}px`, fontSize: '15px', lineHeight: '1.5'}}>
-            Trigger the autonomous agent to execute a payment transaction on Base Sepolia
-          </p>
-
-          <button
-            onClick={handleActivateAgent}
-            disabled={!isConfigured || agentStatus === 'activating'}
-            style={{
-              ...styles.button,
-              ...styles.buttonPrimary,
-              opacity: (!isConfigured || agentStatus === 'activating') ? 0.5 : 1,
-              cursor: (!isConfigured || agentStatus === 'activating') ? 'not-allowed' : 'pointer'
-            }}
-          >
-            <Zap size={13} />
-            {agentStatus === 'activating' ? 'Agent Running...' : 'Activate Agent'}
-          </button>
-
-          {/* Transaction Proof - Display after successful agent execution */}
-          {agentStatus === 'success' && agentResult && (agentResult.transactionHash || agentResult.basescanUrl) && (
-            <div style={{
-              marginTop: `${21}px`,
-              padding: `${21}px`,
-              background: theme === 'dark' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(34, 197, 94, 0.15)',
-              borderRadius: `${13}px`,
-              border: '1px solid #22c55e'
+            {/* Animated Lightning SVG */}
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" style={{
+              filter: 'drop-shadow(0 4px 20px rgba(124, 58, 237, 0.5))',
+              animation: 'float 3s ease-in-out infinite'
             }}>
-              <div style={{display: 'flex', alignItems: 'center', gap: `${8}px`, marginBottom: `${13}px`}}>
-                <CheckCircle2 size={21} style={{color: '#22c55e'}} />
-                <h3 style={{fontSize: '16px', fontWeight: '600', color: theme === 'dark' ? '#86efac' : '#16a34a', margin: 0}}>
-                  Proof of Work
-                </h3>
-              </div>
-              <p style={{fontSize: '14px', color: theme === 'dark' ? '#cbd5e1' : '#64748b', marginBottom: `${13}px`, lineHeight: '1.5'}}>
-                Transaction successfully recorded on Base Sepolia blockchain:
-              </p>
-              <a
-                href={agentResult.basescanUrl || `https://sepolia.basescan.org/tx/${agentResult.transactionHash}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={styles.txLink}
-              >
-                <span>View on BaseScan</span>
-                <ExternalLink size={13} />
-              </a>
-              <p style={{
-                fontSize: `${8}px`,
-                fontFamily: 'monospace',
-                color: theme === 'dark' ? '#64748b' : '#94a3b8',
-                marginTop: `${8}px`,
-                wordBreak: 'break-all'
-              }}>
-                {agentResult.transactionHash}
-              </p>
-              
-              {/* Download Invoice Button */}
-              <button
-                onClick={handleDownloadInvoice}
-                style={{
-                  ...styles.button,
-                  marginTop: `${13}px`,
-                  background: theme === 'dark'
-                    ? 'linear-gradient(135deg, #f59e0b 0%, #f97316 100%)'
-                    : 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
-                  color: '#ffffff',
-                  boxShadow: '0 4px 20px rgba(249, 115, 22, 0.4)'
-                }}
-              >
-                <Download size={16} />
-                Download Invoice (PDF)
-              </button>
-            </div>
-          )}
+              <defs>
+                <linearGradient id="lightning-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style={{ stopColor: '#e0d4ff', stopOpacity: 1 }} />
+                  <stop offset="100%" style={{ stopColor: '#ff6ec7', stopOpacity: 1 }} />
+                </linearGradient>
+              </defs>
+              <path 
+                d="M13 2L3 14h8l-1 8 10-12h-8l1-8z" 
+                fill="url(#lightning-gradient)"
+                stroke={theme === 'dark' ? '#c4b5fd' : '#7c3aed'}
+                strokeWidth="1"
+                strokeLinejoin="round"
+              />
+            </svg>
+            <h1 style={{
+              fontSize: '72px',
+              fontWeight: '800',
+              background: theme === 'dark'
+                ? 'linear-gradient(135deg, #e0d4ff 0%, #ff6ec7 100%)'
+                : 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              letterSpacing: '-0.03em',
+              margin: 0,
+              textShadow: '0 4px 24px rgba(124, 58, 237, 0.3)'
+            }}>
+              MicroGate
+            </h1>
+          </div>
+          <p style={{
+            fontSize: '20px',
+            color: theme === 'dark' ? '#cbd5e1' : '#64748b',
+            fontWeight: '500',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px'
+          }}>
+            <Shield size={20} style={{ color: theme === 'dark' ? '#22c55e' : '#16a34a' }} />
+            AI Agent Payment Dashboard on Base Sepolia
+          </p>
         </div>
 
-            {/* Add Funds Card */}
-            <div style={styles.card}>
-              <div style={styles.cardHeader}>
-                <h2 style={styles.cardTitle}>
+        {/* Error Alert with Premium Design */}
+        {error && (
+          <div style={{
+            maxWidth: '1000px',
+            margin: '0 auto 24px',
+            padding: '20px 24px',
+            borderRadius: '16px',
+            background: theme === 'dark' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(239, 68, 68, 0.15)',
+            border: '2px solid #ef4444',
+            backdropFilter: 'blur(16px)',
+            fontSize: '15px',
+            fontWeight: '500',
+            color: theme === 'dark' ? '#fca5a5' : '#dc2626',
+            position: 'relative',
+            paddingRight: '60px',
+            boxShadow: '0 8px 32px rgba(239, 68, 68, 0.2)',
+            animation: 'slideDown 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
+          }}>
+            <div style={{ whiteSpace: 'pre-wrap' }}>{error}</div>
+            <button
+              onClick={() => setError(null)}
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                background: 'rgba(255, 255, 255, 0.2)',
+                border: 'none',
+                borderRadius: '50%',
+                width: '32px',
+                height: '32px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: 'inherit',
+                fontSize: '20px',
+                fontWeight: 'bold',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = 'rgba(255, 255, 255, 0.3)';
+                e.target.style.transform = 'scale(1.1) rotate(90deg)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = 'rgba(255, 255, 255, 0.2)';
+                e.target.style.transform = 'scale(1) rotate(0deg)';
+              }}
+            >
+              ×
+            </button>
+          </div>
+        )}
+
+        {/* Success Alert */}
+        {success && (
+          <div style={{
+            maxWidth: '1000px',
+            margin: '0 auto 24px',
+            padding: '20px 24px',
+            borderRadius: '16px',
+            background: theme === 'dark' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(34, 197, 94, 0.15)',
+            border: '2px solid #22c55e',
+            backdropFilter: 'blur(16px)',
+            fontSize: '15px',
+            fontWeight: '500',
+            color: theme === 'dark' ? '#86efac' : '#16a34a',
+            boxShadow: '0 8px 32px rgba(34, 197, 94, 0.2)',
+            animation: 'slideDown 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
+          }}>
+            {success}
+          </div>
+        )}
+
+        {/* Main Content Container */}
+        <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+          {/* Premium Grid Layout */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: isDesktop ? '420px 1fr' : '1fr',
+            gap: '32px',
+            marginBottom: '48px',
+            alignItems: 'start'
+          }}>
+            {/* Left Sidebar - Control Cards */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              {/* Agent Balance Card - Premium Design */}
+              <div style={{
+                background: theme === 'dark' 
+                  ? 'rgba(30, 41, 59, 0.6)'
+                  : 'rgba(255, 255, 255, 0.8)',
+                backdropFilter: 'blur(24px)',
+                borderRadius: '24px',
+                padding: '32px',
+                border: theme === 'dark' ? '2px solid rgba(124, 58, 237, 0.2)' : '2px solid rgba(59, 130, 246, 0.15)',
+                boxShadow: theme === 'dark'
+                  ? '0 20px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                  : '0 20px 60px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.5)',
+                transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                position: 'relative',
+                overflow: 'hidden'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-4px)';
+                e.currentTarget.style.boxShadow = theme === 'dark'
+                  ? '0 24px 72px rgba(124, 58, 237, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                  : '0 24px 72px rgba(59, 130, 246, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.5)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = theme === 'dark'
+                  ? '0 20px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                  : '0 20px 60px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.5)';
+              }}
+              >
+                {/* Subtle background pattern */}
+                <div style={{
+                  position: 'absolute',
+                  inset: 0,
+                  backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(124, 58, 237, 0.05) 1px, transparent 0)',
+                  backgroundSize: '32px 32px',
+                  opacity: 0.3
+                }} />
+
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: '24px',
+                  position: 'relative'
+                }}>
+                  <h2 style={{
+                    fontSize: '22px',
+                    fontWeight: '700',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    color: theme === 'dark' ? '#f1f5f9' : '#1e293b',
+                    margin: 0
+                  }}>
+                    <Wallet size={24} style={{ 
+                      color: theme === 'dark' ? '#c4b5fd' : '#7c3aed',
+                      filter: 'drop-shadow(0 2px 8px rgba(124, 58, 237, 0.3))'
+                    }} />
+                    Agent Wallet
+                  </h2>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{
+                      width: '10px',
+                      height: '10px',
+                      borderRadius: '50%',
+                      background: isConfigured ? '#22c55e' : '#ef4444',
+                      boxShadow: isConfigured 
+                        ? '0 0 16px rgba(34, 197, 94, 0.6), 0 0 4px rgba(34, 197, 94, 0.8)'
+                        : '0 0 16px rgba(239, 68, 68, 0.6)',
+                      animation: 'pulse 2s ease-in-out infinite'
+                    }} />
+                    <span style={{
+                      fontSize: '13px',
+                      color: theme === 'dark' ? '#cbd5e1' : '#64748b',
+                      fontWeight: '600',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px'
+                    }}>
+                      {isConfigured ? 'Live' : 'Offline'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Wallet Address Box */}
+                <div style={{
+                  background: theme === 'dark' ? 'rgba(15, 23, 42, 0.6)' : 'rgba(241, 245, 249, 0.8)',
+                  borderRadius: '16px',
+                  padding: '20px',
+                  marginBottom: '20px',
+                  border: theme === 'dark' ? '1px solid rgba(124, 58, 237, 0.2)' : '1px solid rgba(59, 130, 246, 0.1)',
+                  position: 'relative'
+                }}>
+                  <p style={{
+                    fontSize: '12px',
+                    color: theme === 'dark' ? '#94a3b8' : '#64748b',
+                    marginBottom: '8px',
+                    fontWeight: '600',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px'
+                  }}>
+                    Wallet Address
+                  </p>
+                  <p style={{
+                    fontFamily: 'monospace',
+                    fontSize: '16px',
+                    color: theme === 'dark' ? '#c4b5fd' : '#7c3aed',
+                    fontWeight: '700',
+                    margin: 0
+                  }}>
+                    {shortenAddress(CONFIG.AGENT_WALLET)}
+                  </p>
+                </div>
+
+                {/* Balance Display - Premium Gradient Card */}
+                <div style={{
+                  background: theme === 'dark'
+                    ? 'linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #ec4899 100%)'
+                    : 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%)',
+                  borderRadius: '20px',
+                  padding: '28px',
+                  marginBottom: '16px',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  boxShadow: '0 12px 40px rgba(124, 58, 237, 0.4)'
+                }}>
+                  {/* Animated shimmer effect */}
+                  <div style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)',
+                    animation: 'shimmer 3s infinite'
+                  }} />
+
+                  <p style={{
+                    fontSize: '13px',
+                    color: 'rgba(255, 255, 255, 0.9)',
+                    marginBottom: '12px',
+                    fontWeight: '600',
+                    textTransform: 'uppercase',
+                    letterSpacing: '1px',
+                    position: 'relative'
+                  }}>
+                    Current Balance
+                  </p>
+                  {isLoading ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', position: 'relative' }}>
+                      <Activity size={40} className="animate-spin" style={{ color: 'rgba(255, 255, 255, 0.8)' }} />
+                      <span style={{ fontSize: '24px', color: 'rgba(255, 255, 255, 0.95)', fontWeight: '600' }}>Loading...</span>
+                    </div>
+                  ) : isError ? (
+                    <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#fca5a5', position: 'relative' }}>
+                      Error loading
+                    </p>
+                  ) : (
+                    <div style={{ position: 'relative' }}>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                        <p style={{
+                          fontSize: '64px',
+                          fontWeight: '800',
+                          color: '#ffffff',
+                          lineHeight: 1,
+                          margin: 0,
+                          textShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
+                        }}>
+                          {formatBalance(balance)}
+                        </p>
+                        <TrendingUp size={32} style={{ color: 'rgba(255, 255, 255, 0.8)' }} />
+                      </div>
+                      <p style={{
+                        fontSize: '16px',
+                        color: 'rgba(255, 255, 255, 0.95)',
+                        marginTop: '12px',
+                        fontWeight: '600',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                      }}>
+                        <Sparkles size={16} />
+                        {balance?.symbol || 'ETH'} on Base Sepolia
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Refresh Button */}
+                <button
+                  onClick={() => refetch()}
+                  disabled={isLoading}
+                  style={{
+                    width: '100%',
+                    padding: '16px 24px',
+                    borderRadius: '16px',
+                    border: 'none',
+                    fontWeight: '600',
+                    fontSize: '15px',
+                    cursor: isLoading ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.3s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '10px',
+                    background: theme === 'dark' ? 'rgba(51, 65, 85, 0.8)' : 'rgba(226, 232, 240, 0.9)',
+                    color: theme === 'dark' ? '#f1f5f9' : '#1e293b',
+                    backdropFilter: 'blur(8px)',
+                    boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)',
+                    opacity: isLoading ? 0.6 : 1
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isLoading) {
+                      e.currentTarget.style.transform = 'scale(1.02)';
+                      e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.15)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'scale(1)';
+                    e.currentTarget.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.1)';
+                  }}
+                >
+                  <Activity size={16} className={isLoading ? 'animate-spin' : ''} />
+                  {isLoading ? 'Refreshing...' : 'Refresh Balance'}
+                </button>
+              </div>
+
+              {/* Activate Agent Card */}
+              <div style={{
+                background: theme === 'dark' 
+                  ? 'rgba(30, 41, 59, 0.6)'
+                  : 'rgba(255, 255, 255, 0.8)',
+                backdropFilter: 'blur(24px)',
+                borderRadius: '24px',
+                padding: '32px',
+                border: theme === 'dark' ? '2px solid rgba(124, 58, 237, 0.2)' : '2px solid rgba(59, 130, 246, 0.15)',
+                boxShadow: theme === 'dark'
+                  ? '0 20px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                  : '0 20px 60px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.5)',
+                transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                position: 'relative',
+                overflow: 'hidden'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-4px)';
+                e.currentTarget.style.boxShadow = theme === 'dark'
+                  ? '0 24px 72px rgba(124, 58, 237, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                  : '0 24px 72px rgba(59, 130, 246, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.5)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = theme === 'dark'
+                  ? '0 20px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                  : '0 20px 60px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.5)';
+              }}
+              >
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  marginBottom: '20px'
+                }}>
+                  <h2 style={{
+                    fontSize: '22px',
+                    fontWeight: '700',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    color: theme === 'dark' ? '#f1f5f9' : '#1e293b',
+                    margin: 0
+                  }}>
+                    <Zap size={24} style={{ 
+                      color: theme === 'dark' ? '#fbbf24' : '#f59e0b',
+                      filter: 'drop-shadow(0 2px 8px rgba(251, 191, 36, 0.4))'
+                    }} />
+                    Activate Agent
+                  </h2>
+                </div>
+
+                <p style={{
+                  color: theme === 'dark' ? '#cbd5e1' : '#64748b',
+                  marginBottom: '24px',
+                  fontSize: '15px',
+                  lineHeight: '1.6'
+                }}>
+                  Trigger the autonomous AI agent to execute a secure payment transaction on Base Sepolia testnet.
+                </p>
+
+                <button
+                  onClick={handleActivateAgent}
+                  disabled={!isConfigured || agentStatus === 'activating'}
+                  style={{
+                    width: '100%',
+                    padding: '18px 28px',
+                    borderRadius: '16px',
+                    border: 'none',
+                    fontWeight: '700',
+                    fontSize: '16px',
+                    cursor: (!isConfigured || agentStatus === 'activating') ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '12px',
+                    background: theme === 'dark'
+                      ? 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)'
+                      : 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                    color: '#ffffff',
+                    boxShadow: '0 8px 24px rgba(124, 58, 237, 0.4)',
+                    opacity: (!isConfigured || agentStatus === 'activating') ? 0.5 : 1,
+                    position: 'relative',
+                    overflow: 'hidden'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (isConfigured && agentStatus !== 'activating') {
+                      e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
+                      e.currentTarget.style.boxShadow = '0 12px 32px rgba(124, 58, 237, 0.5)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(124, 58, 237, 0.4)';
+                  }}
+                >
+                  {agentStatus === 'activating' && (
+                    <div style={{
+                      position: 'absolute',
+                      inset: 0,
+                      background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)',
+                      animation: 'shimmer 1.5s infinite'
+                    }} />
+                  )}
+                  <Zap size={20} className={agentStatus === 'activating' ? 'animate-spin' : ''} />
+                  {agentStatus === 'activating' ? 'Agent Running...' : 'Activate Agent'}
+                </button>
+
+                {/* Success Result */}
+                {agentStatus === 'success' && agentResult && (agentResult.transactionHash || agentResult.basescanUrl) && (
+                  <div style={{
+                    marginTop: '24px',
+                    padding: '24px',
+                    background: theme === 'dark' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(34, 197, 94, 0.15)',
+                    borderRadius: '16px',
+                    border: '2px solid #22c55e',
+                    animation: 'slideDown 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+                      <CheckCircle2 size={24} style={{ color: '#22c55e' }} />
+                      <h3 style={{
+                        fontSize: '18px',
+                        fontWeight: '700',
+                        color: theme === 'dark' ? '#86efac' : '#16a34a',
+                        margin: 0
+                      }}>
+                        Proof of Execution
+                      </h3>
+                    </div>
+                    <p style={{
+                      fontSize: '14px',
+                      color: theme === 'dark' ? '#cbd5e1' : '#64748b',
+                      marginBottom: '16px',
+                      lineHeight: '1.5'
+                    }}>
+                      Transaction successfully recorded on Base Sepolia blockchain
+                    </p>
+                    <a
+                      href={agentResult.basescanUrl || `https://sepolia.basescan.org/tx/${agentResult.transactionHash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '14px 20px',
+                        background: theme === 'dark'
+                          ? 'rgba(34, 197, 94, 0.2)'
+                          : 'rgba(34, 197, 94, 0.25)',
+                        border: '1px solid #22c55e',
+                        borderRadius: '12px',
+                        color: theme === 'dark' ? '#86efac' : '#16a34a',
+                        textDecoration: 'none',
+                        fontWeight: '600',
+                        fontSize: '14px',
+                        transition: 'all 0.3s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'scale(1.05)';
+                        e.currentTarget.style.boxShadow = '0 4px 16px rgba(34, 197, 94, 0.3)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'scale(1)';
+                        e.currentTarget.style.boxShadow = 'none';
+                      }}
+                    >
+                      <span>View on BaseScan</span>
+                      <ExternalLink size={14} />
+                    </a>
+                    <button
+                      onClick={handleDownloadInvoice}
+                      style={{
+                        width: '100%',
+                        marginTop: '12px',
+                        padding: '14px 20px',
+                        borderRadius: '12px',
+                        border: 'none',
+                        background: theme === 'dark'
+                          ? 'linear-gradient(135deg, #f59e0b 0%, #f97316 100%)'
+                          : 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+                        color: '#ffffff',
+                        fontWeight: '600',
+                        fontSize: '14px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        transition: 'all 0.3s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'scale(1.02)';
+                        e.currentTarget.style.boxShadow = '0 6px 20px rgba(249, 115, 22, 0.4)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'scale(1)';
+                        e.currentTarget.style.boxShadow = 'none';
+                      }}
+                    >
+                      <Download size={16} />
+                      Download Invoice (PDF)
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Add Funds Card */}
+              <div style={{
+                background: theme === 'dark' 
+                  ? 'rgba(30, 41, 59, 0.6)'
+                  : 'rgba(255, 255, 255, 0.8)',
+                backdropFilter: 'blur(24px)',
+                borderRadius: '24px',
+                padding: '32px',
+                border: theme === 'dark' ? '2px solid rgba(236, 72, 153, 0.2)' : '2px solid rgba(249, 115, 22, 0.15)',
+                boxShadow: theme === 'dark'
+                  ? '0 20px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                  : '0 20px 60px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.5)',
+                transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-4px)';
+                e.currentTarget.style.boxShadow = theme === 'dark'
+                  ? '0 24px 72px rgba(236, 72, 153, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                  : '0 24px 72px rgba(249, 115, 22, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.5)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = theme === 'dark'
+                  ? '0 20px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                  : '0 20px 60px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.5)';
+              }}
+              >
+                <h2 style={{
+                  fontSize: '22px',
+                  fontWeight: '700',
+                  marginBottom: '16px',
+                  color: theme === 'dark' ? '#f1f5f9' : '#1e293b'
+                }}>
                   💳 Fund Wallet
                 </h2>
+
+                <p style={{
+                  color: theme === 'dark' ? '#cbd5e1' : '#64748b',
+                  marginBottom: '20px',
+                  fontSize: '15px',
+                  lineHeight: '1.6'
+                }}>
+                  Add ETH instantly using credit/debit card or UPI via Transak
+                </p>
+
+                <button
+                  onClick={handleAddFunds}
+                  disabled={!isConfigured || transakInstance !== null}
+                  style={{
+                    width: '100%',
+                    padding: '18px 28px',
+                    borderRadius: '16px',
+                    border: 'none',
+                    fontWeight: '700',
+                    fontSize: '16px',
+                    cursor: (!isConfigured || transakInstance !== null) ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '12px',
+                    background: theme === 'dark'
+                      ? 'linear-gradient(135deg, #ec4899 0%, #f97316 100%)'
+                      : 'linear-gradient(135deg, #f97316 0%, #f59e0b 100%)',
+                    color: '#ffffff',
+                    boxShadow: '0 8px 24px rgba(236, 72, 153, 0.4)',
+                    opacity: (!isConfigured || transakInstance !== null) ? 0.5 : 1
+                  }}
+                  onMouseEnter={(e) => {
+                    if (isConfigured && transakInstance === null) {
+                      e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
+                      e.currentTarget.style.boxShadow = '0 12px 32px rgba(236, 72, 153, 0.5)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(236, 72, 153, 0.4)';
+                  }}
+                >
+                  {transakInstance ? 'Widget Open...' : '💳 Add Funds'}
+                </button>
               </div>
+            </div>
 
-              <p style={{color: theme === 'dark' ? '#cbd5e1' : '#64748b', marginBottom: `${21}px`, fontSize: '14px', lineHeight: '1.5'}}>
-                Add ETH using UPI via Transak
-              </p>
-
-              <button
-                onClick={handleAddFunds}
-                disabled={!isConfigured || transakInstance !== null}
-                style={{
-                  ...styles.button,
-                  background: theme === 'dark'
-                    ? 'linear-gradient(135deg, #ec4899 0%, #f97316 100%)'
-                    : 'linear-gradient(135deg, #f97316 0%, #f59e0b 100%)',
-                  color: '#ffffff',
-                  boxShadow: theme === 'dark'
-                    ? '0 4px 20px rgba(236, 72, 153, 0.4)'
-                    : '0 4px 20px rgba(249, 115, 22, 0.4)',
-                  opacity: (!isConfigured || transakInstance !== null) ? 0.5 : 1,
-                  cursor: (!isConfigured || transakInstance !== null) ? 'not-allowed' : 'pointer'
-                }}
-              >
-                {transakInstance ? 'Widget Open...' : '💳 Add Funds'}
-              </button>
+            {/* Right Column - Activity Terminal */}
+            <div style={{
+              background: theme === 'dark' 
+                ? 'rgba(15, 23, 42, 0.8)'
+                : 'rgba(255, 255, 255, 0.6)',
+              backdropFilter: 'blur(24px)',
+              border: theme === 'dark' ? '2px solid #22c55e' : '2px solid #10b981',
+              borderRadius: '24px',
+              overflow: 'hidden',
+              boxShadow: theme === 'dark'
+                ? '0 20px 60px rgba(34, 197, 94, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
+                : '0 20px 60px rgba(16, 185, 129, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.5)',
+              minHeight: '600px'
+            }}>
+              <ActivityTerminal logs={logs} theme={theme} />
             </div>
           </div>
 
-          {/* Right Column - Activity Terminal */}
+          {/* Transaction History - Full Width */}
+          <div style={{ marginBottom: '48px' }}>
+            <TransactionHistory theme={theme} transactions={transactions} />
+          </div>
+
+          {/* Info Section */}
           <div style={{
-            border: theme === 'dark' ? '1px solid #22c55e' : '1px solid #10b981',
-            borderRadius: `${21}px`,
-            overflow: 'hidden'
+            background: theme === 'dark' ? 'rgba(15, 23, 42, 0.4)' : 'rgba(248, 250, 252, 0.6)',
+            backdropFilter: 'blur(16px)',
+            borderRadius: '24px',
+            padding: '32px',
+            border: theme === 'dark' ? '1px solid rgba(124, 58, 237, 0.2)' : '1px solid rgba(59, 130, 246, 0.1)'
           }}>
-            <ActivityTerminal logs={logs} theme={theme} />
+            <h3 style={{
+              fontSize: '20px',
+              fontWeight: '700',
+              marginBottom: '20px',
+              color: theme === 'dark' ? '#c4b5fd' : '#7c3aed',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px'
+            }}>
+              <Sparkles size={20} />
+              How it Works
+            </h3>
+            <ol style={{ margin: 0, paddingLeft: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {[
+                'Your AI Agent autonomously pays the backend API for premium data access',
+                'All payments are made in ETH on Base Sepolia testnet',
+                'Fund the agent wallet instantly using UPI/cards through Transak',
+                'Monitor real-time balance updates and transaction history',
+                'View blockchain proof on BaseScan after each successful transaction'
+              ].map((step, idx) => (
+                <li key={idx} style={{
+                  fontSize: '15px',
+                  color: theme === 'dark' ? '#cbd5e1' : '#64748b',
+                  lineHeight: '1.7',
+                  paddingLeft: '8px'
+                }}>
+                  {step}
+                </li>
+              ))}
+            </ol>
           </div>
         </div>
 
-        {/* Transaction History - Full Width */}
-        <div style={{ marginBottom: `${34}px` }}>
-          <TransactionHistory theme={theme} transactions={transactions} />
-        </div>
+        {/* Animations */}
+        <style>{`
+          @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+          }
+          @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+          @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+          }
+          @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+          }
+          @keyframes slideDown {
+            from {
+              opacity: 0;
+              transform: translateY(-20px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+          .animate-spin {
+            animation: spin 1s linear infinite;
+          }
+        `}</style>
 
-        {/* Info Section */}
-        <div style={{
-          ...styles.card,
-          background: theme === 'dark' ? 'rgba(15, 23, 42, 0.5)' : 'rgba(248, 250, 252, 0.5)'
-        }}>
-          <h3 style={{fontSize: '16px', fontWeight: '600', marginBottom: `${13}px`, color: theme === 'dark' ? '#c4b5fd' : '#7c3aed'}}>
-            How it works
-          </h3>
-          <ol style={{margin: 0, paddingLeft: `${21}px`, display: 'flex', flexDirection: 'column', gap: `${8}px`}}>
-            {[
-              'Your AI Agent pays the backend API for premium access',
-              'Payments are made in ETH on Base Sepolia testnet',
-              'Fund the agent\'s wallet using UPI through Transak',
-              'Monitor the agent\'s balance in real-time',
-              'View transaction proof on BaseScan after agent execution'
-            ].map((step, idx) => (
-              <li key={idx} style={{fontSize: '14px', color: theme === 'dark' ? '#cbd5e1' : '#64748b', lineHeight: '1.6'}}>
-                {step}
-              </li>
-            ))}
-          </ol>
-        </div>
+        {/* System Status Footer */}
+        <SystemStatus theme={theme} network="Base Sepolia" chainId={84532} />
       </div>
-
-      {/* Add animation keyframes */}
-      <style>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.5; }
-        }
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
-
-      {/* System Status Footer */}
-      <SystemStatus theme={theme} network="Base Sepolia" chainId={84532} />
-    </div>
+    </>
   )
 }
 
