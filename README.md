@@ -197,16 +197,15 @@ npm start
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    FRONTEND (React + Viem)                   │
+│                    FRONTEND (React + Viem)                  │
 │  ┌─────────────────────────────────────────────────────┐    │
-│  │  • Golden Ratio Dashboard (φ = 1.618)               │    │
 │  │  • Light/Dark Theme Toggle                          │    │
 │  │  • Real-time Balance Monitoring                     │    │
 │  │  • Transaction History Table                        │    │
 │  │  • Transak Payment Widget                           │    │
 │  │  • Agent Control Panel                              │    │
 │  └─────────────────────────────────────────────────────┘    │
-│                         Port: 5173                           │
+│                         Port: 5173                          │
 └──────────────────────────┬───────────────────────────────────┘
                            │ HTTP REST API
 ┌──────────────────────────▼───────────────────────────────────┐
