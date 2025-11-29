@@ -1,482 +1,690 @@
-# MicroGate - AI Agent Payment System 🚀
+# 🌐 MicroGate - AI Agent Payment Gateway
 
-A cyberpunk-themed micropayment gateway where AI agents pay for API access using cryptocurrency on Base Sepolia.
+> **A production-ready micropayment system where autonomous AI agents pay for API access using cryptocurrency on Base Sepolia testnet.**
 
-![Status](https://img.shields.io/badge/status-production-green)
-![Network](https://img.shields.io/badge/network-Base%20Sepolia-blue)
-![License](https://img.shields.io/badge/license-MIT-green)
-
-## ✨ Features
-
-- ⚡ **x402 Payment Rail** - Pay-per-use API access protocol
-- 🔗 **Blockchain Verified** - Payment verification on Base Sepolia
-- 🤖 **Autonomous Agent** - AI agent pays for services automatically
-- 💰 **Real-time Balance** - Live ETH balance monitoring (auto-refresh every 30s)
-- 💳 **UPI Payments** - Add funds via Transak (India: INR → USDC)
-- 🎨 **Cyberpunk UI** - Black background, neon green, scanline effects
-- 🔄 **No Wallet Required** - Direct RPC balance reading with viem
-
-## 🎯 Quick Start
-
-### One Command Start
-```powershell
-cd microgate-project
-npm start
-```
-
-This automatically:
-1. ✅ Runs pre-flight checks
-2. 🚀 Starts backend (port 3000)
-3. 🌐 Starts frontend (port 5173)
-4. 🎨 Opens cyberpunk dashboard in browser
-
-### Access Points
-- **Frontend Dashboard**: http://localhost:5173
-- **Backend API**: http://localhost:3000
-- **Health Check**: http://localhost:3000/api/health
+[![Status](https://img.shields.io/badge/status-production-brightgreen)](https://github.com/SathvikRaoR/microgate-project)
+[![Network](https://img.shields.io/badge/network-Base%20Sepolia-blue)](https://sepolia.basescan.org/)
+[![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
+[![Version](https://img.shields.io/badge/version-3.0.0-orange)](https://github.com/SathvikRaoR/microgate-project/releases)
 
 ---
 
-## 📦 What's New (v2.0)
-npm install
+## 📖 Table of Contents
+
+- [Overview](#-overview)
+- [Key Features](#-key-features)
+- [What's New](#-whats-new-in-v30)
+- [Quick Start](#-quick-start)
+- [Architecture](#-architecture)
+- [Installation](#-installation)
+- [Configuration](#-configuration)
+- [Database Setup](#-database-setup-supabase)
+- [API Documentation](#-api-documentation)
+- [Usage Guide](#-usage-guide)
+- [Tech Stack](#-tech-stack)
+- [Project Structure](#-project-structure)
+- [Security](#-security)
+- [Troubleshooting](#-troubleshooting)
+- [Contributing](#-contributing)
+- [License](#-license)
+
+---
+
+## 🎯 Overview
+
+MicroGate implements the **x402 Payment Protocol** - a novel approach where AI agents autonomously pay for API access using blockchain transactions. When an agent requests premium data, the server responds with `402 Payment Required`, the agent sends cryptocurrency on-chain, and upon verification, receives the protected content.
+
+### Why MicroGate?
+
+- 🤖 **Autonomous Payments** - No human intervention needed
+- 🔗 **Cryptographically Verified** - All transactions on Base Sepolia blockchain
+- 💰 **Micro-transactions** - Pay only for what you use (0.0001 ETH minimum)
+- 🌍 **Global Access** - Works anywhere with internet connection
+- 🗄️ **Complete History** - Every transaction logged in Supabase database
+- 🎨 **Beautiful UI** - Golden ratio design (φ = 1.618) with light/dark themes
+
+### Live Demo
+
+- **Frontend Dashboard**: http://localhost:5173
+- **Backend API**: http://localhost:3000
+- **Health Check**: http://localhost:3000/api/health
+- **Transactions API**: http://localhost:3000/api/transactions
+
+---
+
+## ✨ Key Features
+
+### 🚀 Core Features
+
+| Feature | Description |
+|---------|-------------|
+| ⚡ **x402 Payment Protocol** | Industry-standard HTTP 402 status for pay-per-use APIs |
+| 🔗 **Blockchain Verification** | Real-time on-chain transaction verification via viem |
+| 🤖 **AI Agent Support** | Fully autonomous payment and retry logic |
+| 💰 **Live Balance Monitoring** | Auto-refresh every 30 seconds + manual refresh |
+| 🎨 **Golden Ratio UI** | φ-based responsive design with smooth animations |
+| 🌓 **Theme Toggle** | Seamless light/dark mode with localStorage persistence |
+
+### 💳 Payment & Funding
+
+| Feature | Description |
+|---------|-------------|
+| 💳 **Transak Integration** | Buy crypto with UPI (INR), credit cards, or bank transfer |
+| 💵 **Multi-Currency** | Accepts ETH and USDC on Base Sepolia |
+| 🔒 **Secure Transactions** | All payments verified on-chain before access granted |
+| 📊 **Real-time Rates** | Live exchange rates from Transak API |
+
+### 🗄️ Database & History
+
+| Feature | Description |
+|---------|-------------|
+| 🗄️ **Supabase PostgreSQL** | Production-grade database with automatic backups |
+| 📜 **Transaction History** | Complete audit trail of all payments |
+| 🔗 **BaseScan Links** | Direct blockchain explorer links for transparency |
+| 🔐 **Row Level Security** | Database-level access control with RLS policies |
+| 🔄 **Auto-Logging** | Transactions saved automatically on verification |
+| 🔍 **Filtering & Search** | Query transactions by wallet address |
+
+### 🛡️ Security & Reliability
+
+| Feature | Description |
+|---------|-------------|
+| 🔒 **Rate Limiting** | 5 requests/minute per IP address |
+| 🌐 **CORS Protection** | Configurable cross-origin resource sharing |
+| 🛡️ **Input Validation** | All API inputs sanitized and validated |
+| 🔄 **Graceful Degradation** | Works without database configured |
+| 📝 **Comprehensive Logging** | Detailed console logs for debugging |
+| ⚠️ **Error Handling** | User-friendly error messages |
+
+---
+
+## 🆕 What's New in v3.0
+
+### Database Integration 🗄️
+
+**Major Update**: Full Supabase PostgreSQL integration for persistent transaction storage!
+
+#### New Features
+
+1. **📊 Transaction History Card**
+   - Beautiful table view with Date | Hash | Amount | Status columns
+   - Responsive design with horizontal scroll on mobile
+   - Theme-aware styling (golden ratio colors)
+   - Auto-refresh every 30 seconds
+
+2. **🔗 BaseScan Integration**
+   - Every transaction hash links to blockchain explorer
+   - External link icon for visual clarity
+   - Opens in new tab for seamless UX
+
+3. **🗄️ Supabase Backend**
+   - PostgreSQL database with proper schema
+   - Row Level Security (RLS) policies
+   - Indexed queries for performance
+   - Auto-updating timestamps with triggers
+
+4. **🔄 Automatic Logging**
+   - Transactions saved on payment verification
+   - Includes: wallet address, tx hash, amount, status
+   - Graceful error handling (doesn't break payment flow)
+
+5. **📡 New API Endpoint**
+   - `GET /api/transactions` - Fetch transaction history
+   - Query parameter: `?agent_address=0x...` for filtering
+   - Returns JSON with success status and transaction array
+
+#### Database Schema
+
+```sql
+CREATE TABLE transactions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  agent_address TEXT NOT NULL,
+  tx_hash TEXT NOT NULL UNIQUE,
+  amount NUMERIC(18, 6) NOT NULL DEFAULT 0,
+  status TEXT NOT NULL CHECK (status IN ('pending', 'confirmed', 'failed')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Indexes for query performance
+CREATE INDEX idx_transactions_agent_address ON transactions(agent_address);
+CREATE INDEX idx_transactions_created_at ON transactions(created_at DESC);
+CREATE INDEX idx_transactions_status ON transactions(status);
 ```
 
-3. Configure environment variables:
-   - Copy `.env.example` to `.env`
-   - Fill in your wallet details:
-     - `PRIVATE_KEY`: Your wallet's private key (for agent)
-     - `WALLET_ADDRESS`: Your wallet's public address (receives payments)
-     - `RPC_URL`: Base Sepolia RPC endpoint (default provided)---
+### Previous Updates (v2.0)
 
-## 📦 What's New (v2.0)
+- ✅ Fixed blank screen issue (removed wagmi dependency)
+- ✅ Implemented golden ratio UI design
+- ✅ Added light/dark theme toggle
+- ✅ Auto-refresh balance every 30 seconds
+- ✅ Network status monitoring
+- ✅ Improved error handling
 
-### 🔥 Major Improvements
-1. **Fixed Blank Screen** - Removed wagmi wallet dependency, direct viem RPC calls
-2. **Cyberpunk UI Complete** - Full cyberpunk/hacker aesthetic with animations
-3. **Auto-Refresh Balance** - Updates every 30 seconds automatically
-4. **Network Status** - Live RPC connectivity monitoring
-5. **Better Error Handling** - Clear error messages and recovery
-6. **Simplified Architecture** - No wallet connection needed for viewing
+---
 
-See [IMPROVEMENTS.md](./IMPROVEMENTS.md) for detailed changelog.
+## 🚀 Quick Start
+
+### One-Command Launch
+
+```powershell
+# Clone the repository
+git clone https://github.com/SathvikRaoR/microgate-project.git
+cd microgate-project
+
+# Install dependencies
+npm install
+
+# Start both servers
+npm start
+```
+
+**That's it!** The script will:
+1. ✅ Run pre-flight checks
+2. 🚀 Start backend server (port 3000)
+3. 🌐 Start frontend server (port 5173)
+4. 🎨 Open dashboard in browser
+
+### Access the Application
+
+- **Dashboard**: http://localhost:5173
+- **API**: http://localhost:3000/api/health
+- **Transactions**: http://localhost:3000/api/transactions
 
 ---
 
 ## 🏗️ Architecture
 
 ```
-┌─────────────────────────────────────┐
-│   FRONTEND (React + Viem)           │
-│   - Cyberpunk Dashboard             │
-│   - Balance Monitoring              │
-│   - UPI Payment Integration         │
-│   - Agent Control Panel             │
-│   Port: 5173                        │
-└──────────────┬──────────────────────┘
-               │ HTTP REST API
-┌──────────────▼──────────────────────┐
-│   BACKEND (Express.js)              │
-│   - Payment Verification            │
-│   - x402 Protocol Handler           │
-│   - Agent Process Manager           │
-│   Port: 3000                        │
-└──────────────┬──────────────────────┘
-               │ JSON-RPC
-┌──────────────▼──────────────────────┐
-│   BASE SEPOLIA TESTNET              │
-│   - Smart Contract Interactions     │
-│   - Balance Queries                 │
-│   - Transaction Verification        │
-└─────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                    FRONTEND (React + Viem)                   │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │  • Golden Ratio Dashboard (φ = 1.618)               │    │
+│  │  • Light/Dark Theme Toggle                          │    │
+│  │  • Real-time Balance Monitoring                     │    │
+│  │  • Transaction History Table                        │    │
+│  │  • Transak Payment Widget                           │    │
+│  │  • Agent Control Panel                              │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                         Port: 5173                           │
+└──────────────────────────┬───────────────────────────────────┘
+                           │ HTTP REST API
+┌──────────────────────────▼───────────────────────────────────┐
+│                    BACKEND (Express.js)                      │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │  • x402 Payment Protocol Handler                    │    │
+│  │  • On-chain Transaction Verification               │    │
+│  │  • Rate Limiting (5 req/min per IP)                │    │
+│  │  • CORS Protection                                  │    │
+│  │  • Supabase Transaction Logging                    │    │
+│  │  • AI Agent Process Management                     │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                         Port: 3000                           │
+└──────────────────────────┬───────────────────────────────────┘
+                           │ JSON-RPC / PostgreSQL
+          ┌────────────────┴────────────────┐
+          │                                 │
+┌─────────▼──────────┐          ┌──────────▼─────────┐
+│  BASE SEPOLIA      │          │  SUPABASE DB       │
+│  TESTNET           │          │  (PostgreSQL)      │
+│                    │          │                    │
+│  • Balance Queries │          │  • Transaction Log │
+│  • TX Verification │          │  • RLS Policies    │
+│  • Smart Contracts │          │  • Auto-backups    │
+└────────────────────┘          └────────────────────┘
 ```
 
----
+### Data Flow
 
-## 🎨 UI Preview
-
-**Cyberpunk Dashboard Features:**
-- ⬛ Pure black background (#000000)
-- 🟢 Neon green accents (#00ff41)
-- 📺 Scanline CRT effect overlay
-- ✨ Glitch animation on title
-- 💫 Smooth fade-in on cards
-- 🎯 Lucide-react icons
-- 🔄 Auto-updating balance
-- 💳 Integrated UPI fueling station
+1. **User Funds Wallet** → Transak widget → USDC/ETH to wallet
+2. **User Activates Agent** → Frontend → Backend spawns agent
+3. **Agent Requests Data** → Backend returns `402 Payment Required`
+4. **Agent Sends Payment** → Base Sepolia blockchain transaction
+5. **Backend Verifies** → Checks on-chain transaction + saves to Supabase
+6. **Agent Gets Data** → Backend returns premium content
+7. **Frontend Updates** → History table refreshes with new transaction
 
 ---
 
-## 🚀 Installation & Setup
+## 📦 Installation
 
 ### Prerequisites
-- Node.js (v18 or higher)
-- npm or yarn
-- PowerShell (Windows) or Bash (Linux/Mac)
 
-### Step 1: Clone & Install
-```powershell
+- **Node.js** v18+ ([Download](https://nodejs.org/))
+- **npm** v9+ (included with Node.js)
+- **Git** ([Download](https://git-scm.com/))
+- **Supabase Account** (optional, for database features)
+
+### Step 1: Clone Repository
+
+```bash
 git clone https://github.com/SathvikRaoR/microgate-project.git
 cd microgate-project
+```
+
+### Step 2: Install Dependencies
+
+```bash
+# Install root dependencies
 npm install
-```
 
-### Step 2: Configure (Optional)
-Create `.env` files if you want to override defaults:
-
-**Backend** (`backend/.env`):
-```env
-PORT=3000
-AGENT_WALLET_ADDRESS=0xYourWalletHere
-PRIVATE_KEY=your_private_key_here
-```
-
-**Frontend** (`frontend/.env`):
-```env
-VITE_AGENT_WALLET_ADDRESS=0xYourWalletHere
-VITE_TRANSAK_API_KEY=your_transak_api_key
-```
-
-### Step 3: Run
-```powershell
-npm start
-```
-
----
-
-## 📡 API Endpoints
-
-### Health Check
-```http
-GET /api/health
-```
-Returns backend status and configuration.
-
-### Trigger Agent
-```http
-POST /api/trigger-agent
-Content-Type: application/json
-
-{
-  "wallet": "0xWalletAddress"
-}
-```
-Spawns autonomous payment agent process.
-
-### Payment Verification (x402 Protocol)
-```http
-GET /api/secret
-X-Payment-Hash: 0xTransactionHash
-```
-Returns protected content after payment verification.
-
----
-
-## 🎮 Usage Guide
-
-### 1. View Balance
-- Dashboard automatically displays ETH balance
-- Click refresh icon to manually update
-- Auto-refreshes every 30 seconds
-
-### 2. Add Funds (UPI)
-1. Click "ADD FUEL (UPI)" button
-2. Transak widget opens
-3. Select UPI payment method
-4. Enter amount in INR
-5. Complete UPI payment
-6. USDC credited to wallet
-7. Balance updates automatically
-
-### 3. Activate Agent
-1. Ensure wallet has sufficient balance
-2. Click "ACTIVATE AGENT" button
-3. Backend spawns agent process
-4. Agent attempts API access
-5. Pays if needed (402 response)
-6. Retrieves protected content
-
----
-
-## 🔧 Advanced Configuration
-
-### Custom RPC Endpoint
-Edit `frontend/src/App.jsx`:
-```javascript
-const publicClient = createPublicClient({
-  chain: baseSepolia,
-  transport: http('https://your-custom-rpc-url.com')
-});
-```
-
-### Change Refresh Interval
-Edit `frontend/src/App.jsx`:
-```javascript
-const CONFIG = {
-  BALANCE_REFRESH_DELAY: 5000,  // Balance refresh after transaction
-  // ...
-};
-
-// Auto-refresh interval in useEffect:
-const interval = setInterval(fetchBalance, 30000); // Change 30000 to desired ms
-```
-
-### Modify Theme Colors
-Edit `frontend/src/index.css` and `App.jsx`:
-```css
-/* Change neon green to another color */
-:root {
-  --neon-color: #00ff41; /* Change this */
-}
-```
-
----
-
-## 🧪 Testing
-
-### Test Backend
-```powershell
-# Health check
-Invoke-RestMethod -Uri "http://localhost:3000/api/health"
-
-# Expected output:
-# {
-#   "status": "healthy",
-#   "network": "Base Sepolia",
-#   "wallet": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
-# }
-```
-
-### Test Frontend
-1. Open http://localhost:5173
-2. Check for:
-   - ✅ Black background with neon green text
-   - ✅ Scanline effect visible
-   - ✅ Balance loading (or showing)
-   - ✅ All 4 cards rendering
-   - ✅ Footer showing RPC status
-
----
-
-## 🛠️ Manual Setup
-
-If automated start doesn't work:
-
-### Backend
-```powershell
+# Install backend dependencies
 cd backend
 npm install
+
+# Install frontend dependencies
+cd ../frontend
+npm install
+```
+
+### Step 3: Environment Configuration
+
+See [Configuration](#-configuration) section below.
+
+### Step 4: Start Servers
+
+```bash
+# From project root
 npm start
 ```
 
-### Frontend
-```powershell
+Or manually:
+
+```bash
+# Terminal 1 - Backend
+cd backend
+node server.js
+
+# Terminal 2 - Frontend
 cd frontend
-npm install
 npm run dev
 ```
 
-### Agent
-```powershell
+---
+
+## ⚙️ Configuration
+
+### Backend Configuration
+
+Create `backend/.env`:
+
+```env
+# Server Configuration
+PORT=3000
+
+# Blockchain Configuration
+PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+WALLET_ADDRESS=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+RPC_URL=https://sepolia.base.org
+USDC_CONTRACT=0x036CbD53842c5426634e7929541eC2318f3dCF7e
+
+# Supabase Configuration (Optional - for transaction history)
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_KEY=your-service-role-key-here
+```
+
+**How to get values:**
+
+1. **PRIVATE_KEY & WALLET_ADDRESS**: 
+   - Use a testnet wallet (e.g., Hardhat default account)
+   - **Never use mainnet keys!**
+
+2. **RPC_URL**: 
+   - Default: `https://sepolia.base.org` (Base Sepolia testnet)
+   - Or use Alchemy/Infura URLs
+
+3. **SUPABASE_URL & SUPABASE_KEY**:
+   - See [Database Setup](#-database-setup-supabase) section
+
+### Frontend Configuration
+
+Create `frontend/.env`:
+
+```env
+# Agent Wallet (matches backend WALLET_ADDRESS)
+VITE_AGENT_WALLET_ADDRESS=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+
+# Backend API URL
+VITE_BACKEND_URL=http://localhost:3000
+
+# Transak Configuration (for UPI payments)
+VITE_TRANSAK_API_KEY=3fd3ee4e-dd3c-49be-89bc-7bd527402ddf
+VITE_TRANSAK_ENV=STAGING
+
+# RPC Endpoint
+VITE_RPC_URL=https://sepolia.base.org
+```
+
+**How to get Transak API Key:**
+
+1. Sign up at [transak.com](https://transak.com/)
+2. Create a new project
+3. Copy API key from dashboard
+4. Use `STAGING` environment for testing
+
+---
+
+## 🗄️ Database Setup (Supabase)
+
+### Why Supabase?
+
+- 🔒 PostgreSQL with Row Level Security
+- ⚡ Fast queries with automatic indexing
+- 🌐 REST API auto-generated
+- 📊 Real-time subscriptions (future feature)
+- 💾 Automatic backups
+
+### Step 1: Create Supabase Project
+
+1. Go to [supabase.com](https://supabase.com/)
+2. Click "Start your project"
+3. Create new organization (if needed)
+4. Create new project:
+   - **Name**: microgate-db
+   - **Database Password**: (save this securely)
+   - **Region**: Choose closest to you
+5. Wait for project to provision (~2 minutes)
+
+### Step 2: Run SQL Schema
+
+1. In Supabase dashboard, go to **SQL Editor**
+2. Click **New query**
+3. Paste contents from `database/supabase-setup.sql` (76 lines)
+4. Click **Run** button
+5. Verify: ✅ Success message shown
+
+### Step 3: Get API Credentials
+
+1. Go to **Project Settings** → **API**
+2. Copy these values:
+   - **Project URL**: `https://xxxxx.supabase.co`
+   - **service_role key** (NOT anon key): `eyJhbGciOi...`
+3. Add to `backend/.env`:
+
+```env
+SUPABASE_URL=https://xxxxx.supabase.co
+SUPABASE_KEY=eyJhbGciOi... (service_role key)
+```
+
+### Step 4: Verify Setup
+
+Restart backend server:
+
+```bash
 cd backend
-npm run agent
+node server.js
+```
+
+Look for:
+```
+✅ Supabase client initialized
+🚀 MicroGate Backend running on port 3000
 ```
 
 ---
 
-## 📚 Project Structure
+## 📡 API Documentation
+
+### Base URL
+
+```
+http://localhost:3000
+```
+
+### Endpoints
+
+#### 1. Health Check
+
+```http
+GET /api/health
+```
+
+**Response** (200 OK):
+```json
+{
+  "status": "ok",
+  "timestamp": "2025-11-29T10:30:00.000Z",
+  "network": "Base Sepolia",
+  "wallet": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+}
+```
+
+#### 2. Get Transaction History
+
+```http
+GET /api/transactions?agent_address=0x...
+```
+
+**Response** (200 OK):
+```json
+{
+  "success": true,
+  "transactions": [
+    {
+      "id": "uuid",
+      "agent_address": "0x...",
+      "tx_hash": "0x...",
+      "amount": "0.001000",
+      "status": "confirmed",
+      "created_at": "2025-11-29T10:30:00.000Z"
+    }
+  ],
+  "count": 1
+}
+```
+
+#### 3. Premium Data Access (x402)
+
+```http
+GET /api/premium-data
+X-Payment-Hash: 0x...
+```
+
+**Response** (200 OK after payment):
+```json
+{
+  "success": true,
+  "data": {
+    "secret": "The answer is 42",
+    "timestamp": "2025-11-29T10:30:00.000Z"
+  }
+}
+```
+
+---
+
+## 📚 Usage Guide
+
+### 1. View Agent Balance
+
+Dashboard automatically displays ETH balance and auto-refreshes every 30 seconds. Click refresh icon for manual update.
+
+### 2. Fund Your Agent Wallet
+
+**Option A: Faucet** (Free)
+- Visit [Coinbase Faucet](https://www.coinbase.com/faucets)
+- Paste wallet address
+- Request testnet ETH
+
+**Option B: Transak** (UPI/Card)
+- Click "Fund Agent (UPI)" button
+- Complete payment in widget
+- USDC credited in 2-5 minutes
+
+### 3. Activate AI Agent
+
+1. Ensure wallet has ≥ 0.0001 ETH
+2. Click "Activate Agent" button
+3. Agent sends payment and receives data
+4. Transaction appears in history table
+
+### 4. View Transaction History
+
+History card shows all past transactions with:
+- Date & time
+- Transaction hash (links to BaseScan)
+- Amount in ETH
+- Status badge (confirmed/pending/failed)
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology | Version |
+|-------|------------|---------|
+| Frontend | React | 18.2.0 |
+| | Viem | 2.7.0 |
+| | Vite | 5.4.21 |
+| | Transak SDK | 3.0.0 |
+| Backend | Express | 4.18.0 |
+| | Viem | 2.7.0 |
+| | Supabase JS | 2.x |
+| Infrastructure | Base Sepolia | Testnet |
+| | Supabase | PostgreSQL |
+| | Transak | Payment Gateway |
+
+---
+
+## 📁 Project Structure
 
 ```
 microgate-project/
 ├── backend/
-│   ├── server.js           # Express API server
-│   ├── agent.js            # Autonomous payment agent
-│   ├── package.json        # Backend dependencies
-│   └── .env.example        # Environment template
+│   ├── server.js              # Express API (329 lines)
+│   ├── agent.js               # AI agent logic
+│   ├── .env                   # Environment variables
+│   └── package.json           # Dependencies
 ├── frontend/
 │   ├── src/
-│   │   ├── App.jsx         # Main dashboard component
-│   │   ├── main.jsx        # React entry point
-│   │   └── index.css       # Cyberpunk styles & animations
-│   ├── index.html          # HTML template
-│   ├── vite.config.js      # Vite configuration
-│   └── package.json        # Frontend dependencies
-├── run.js                  # Cross-platform startup script
-├── run.ps1                 # PowerShell runner (Windows)
-├── run.sh                  # Bash runner (Linux/Mac)
-├── package.json            # Root package configuration
-├── README.md               # This file
-└── IMPROVEMENTS.md         # Detailed changelog
+│   │   ├── App.jsx            # Main dashboard (789 lines)
+│   │   ├── main.jsx           # React entry
+│   │   └── index.css          # Golden ratio styles
+│   ├── index.html
+│   ├── .env                   # Frontend config
+│   └── package.json
+├── database/
+│   └── supabase-setup.sql     # DB schema (76 lines)
+├── package.json               # Root scripts
+└── README.md                  # This file
 ```
+
+---
+
+## 🔐 Security
+
+### Implemented Best Practices
+
+✅ Environment variables for secrets  
+✅ Input validation on all endpoints  
+✅ Rate limiting (5 req/min per IP)  
+✅ CORS protection  
+✅ Row Level Security (database)  
+✅ On-chain transaction verification  
+
+### Production Checklist
+
+- [ ] Generate new wallet keys
+- [ ] Use mainnet RPC endpoints
+- [ ] Configure production CORS
+- [ ] Enable HTTPS
+- [ ] Implement JWT authentication
+- [ ] Add API key management
+- [ ] Set up monitoring/alerts
+
+⚠️ **This is a testnet application - do NOT use for mainnet without security audit!**
 
 ---
 
 ## 🐛 Troubleshooting
 
 ### Blank Screen
-**Solution**: Already fixed in v2.0. If still occurring:
-1. Check browser console for errors
-2. Ensure `npm start` shows both servers running
-3. Clear browser cache and reload
-4. Verify RPC endpoint is accessible
+```powershell
+cd frontend
+Remove-Item -Recurse -Force node_modules
+npm install
+npm run dev
+```
 
 ### Balance Not Loading
-**Causes**:
-- RPC endpoint down
-- Wallet address invalid
-- Network connectivity issue
+- Check RPC endpoint in `.env`
+- Try alternative RPC (Alchemy/Infura)
+- Verify network status in footer
 
-**Solution**:
-- Check footer "RPC STATUS" indicator
-- Verify wallet address starts with "0x"
-- Try manual refresh button
+### Transaction History Empty
+- Ensure Supabase configured in `backend/.env`
+- Check table exists in Supabase dashboard
+- Test API: `curl http://localhost:3000/api/transactions`
 
-### Port Already in Use
+### Ports In Use
 ```powershell
-# Kill processes on ports 3000 and 5173
 Get-Process node | Stop-Process -Force
+npm start
 ```
 
-### Node Modules Issues
-```powershell
-# Clean reinstall
-Remove-Item -Recurse -Force node_modules, package-lock.json
-npm install
-```
-
----
-
-## 📊 Tech Stack
-
-### Frontend
-- **React 18.2** - UI framework
-- **Viem 2.7** - Ethereum interactions (no wallet needed)
-- **Transak SDK 3.0** - Fiat on-ramp (UPI payments)
-- **Lucide React** - Icon library
-- **Vite 5.2** - Build tool & dev server
-
-### Backend
-- **Express 4.18** - API server
-- **Viem 2.7** - Blockchain transactions
-- **CORS** - Cross-origin support
-
-### Blockchain
-- **Base Sepolia** - Testnet
-- **HTTP RPC** - No wallet provider needed
-
----
-
-## 🔐 Security Notes
-
-⚠️ **Important**:
-- Never commit private keys to Git
-- Use `.gitignore` for `.env` files
-- Testnet only - not for mainnet use
-- CORS configured for localhost only
-- Input validation on all endpoints
+### More Help
+- Check browser console (F12)
+- Check backend logs
+- [GitHub Issues](https://github.com/SathvikRaoR/microgate-project/issues)
 
 ---
 
 ## 🤝 Contributing
 
-Contributions welcome! Please:
 1. Fork the repository
-2. Create feature branch (`git checkout -b feature/amazing`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing`)
+2. Create feature branch: `git checkout -b feature/amazing`
+3. Commit changes: `git commit -m 'Add feature'`
+4. Push to branch: `git push origin feature/amazing`
 5. Open Pull Request
+
+Follow conventional commits:
+```
+feat: Add new feature
+fix: Fix bug
+docs: Update documentation
+style: Format code
+refactor: Refactor code
+test: Add tests
+chore: Update dependencies
+```
 
 ---
 
 ## 📄 License
 
-MIT License - see LICENSE file for details
+MIT License - Copyright (c) 2025 MicroGate Team
 
 ---
 
 ## 🙏 Acknowledgments
 
-- **Viem** - Modern Ethereum library
-- **Transak** - Fiat-to-crypto on-ramp
-- **Lucide** - Beautiful icon library
-- **Base** - Optimistic Ethereum L2
+- [Viem](https://viem.sh/) - Ethereum library
+- [Transak](https://transak.com/) - Fiat on-ramp
+- [Supabase](https://supabase.com/) - Database
+- [Base](https://base.org/) - L2 network
+- [Lucide](https://lucide.dev/) - Icons
 
 ---
 
 ## 📞 Support
 
-- 📧 Email: support@microgate.example
-- 💬 Discord: [Join Server](#)
-- 🐛 Issues: [GitHub Issues](https://github.com/SathvikRaoR/microgate-project/issues)
-- 📖 Docs: See [IMPROVEMENTS.md](./IMPROVEMENTS.md)
+- 🐛 [GitHub Issues](https://github.com/SathvikRaoR/microgate-project/issues)
+- 💬 [Discussions](https://github.com/SathvikRaoR/microgate-project/discussions)
+- 📧 Email: sathvikrao@example.com
 
 ---
 
+<div align="center">
+
 **Built with ❤️ by the MicroGate Team**
 
+⭐ Star this repo | 🍴 Fork | 👀 Watch for updates
+
+[⬆ Back to Top](#-microgate---ai-agent-payment-gateway)
+
+</div>
+
+---
+
 **Last Updated**: November 29, 2025  
-**Version**: 2.0.0  
-**Status**: ✅ Production Ready
-     - `VITE_TRANSAK_API_KEY`: Get from https://transak.com/
-
-4. Start the development server:
-```bash
-npm run dev
-```
-
-### Running the AI Agent
-
-1. Ensure the backend server is running
-2. In the backend directory, run:
-```bash
-npm run agent
-```
-
-The agent will:
-1. Try to access the protected `/api/secret` endpoint
-2. Get rejected with 402 Payment Required
-3. Automatically send payment to the server wallet
-4. Retry with the payment hash
-5. Successfully retrieve the secret
-
-## Payment Details
-
-- **Minimum Payment**: 0.0001 ETH on Base Sepolia
-- **Alternative**: 0.01 USDC (if configured)
-- **Network**: Base Sepolia Testnet
-
-## How It Works
-
-1. **Request**: Agent requests access to premium content
-2. **402 Payment Required**: Server responds with payment details
-3. **Payment**: Agent sends crypto payment on-chain
-4. **Verification**: Server verifies the transaction
-5. **Access Granted**: Agent receives the secret content
-
-## Security Notes
-
-- Never commit your `.env` file
-- Keep your `PRIVATE_KEY` secure
-- Use testnet for development
-- Implement proper amount verification in production
-
-## Technologies Used
-
-- **Backend**: Express.js, Viem (Ethereum library)
-- **Frontend**: React, Wagmi, Transak SDK
-- **Blockchain**: Base Sepolia, Viem
-- **Styling**: Tailwind CSS
-
-## Troubleshooting
-
-### CSS Warnings in VS Code
-The Tailwind `@tailwind` directives may show warnings in VS Code. These are false positives and can be safely ignored.
-
-### Transaction Verification Failed
-- Ensure the payment is sent to the correct address
-- Check that the amount meets the minimum requirement
-- Verify the transaction was successful on-chain
-
-### Agent Can't Connect
-- Make sure the backend server is running on port 3000
-- Check that your RPC_URL is accessible
-- Verify your wallet has sufficient balance
+**Version**: 3.0.0  
+**Status**: ✅ Production Ready (Testnet)
