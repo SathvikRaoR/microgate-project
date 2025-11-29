@@ -44,6 +44,9 @@ function App() {
     return localStorage.getItem('microgate-theme') || 'dark';
   });
 
+  // Responsive state
+  const [isDesktop, setIsDesktop] = useState(true);
+
   // Existing states
   const [transakInstance, setTransakInstance] = useState(null);
   const [error, setError] = useState(null);
@@ -125,6 +128,17 @@ function App() {
 
   // Check if wallet address is configured and fetch initial balance
   useEffect(() => {
+    // Handle responsive layout
+    const handleResize = () => {
+      setIsDesktop(window.innerWidth > 1024);
+    };
+    
+    // Set initial value
+    handleResize();
+    
+    // Add resize listener
+    window.addEventListener('resize', handleResize);
+    
     const configured = CONFIG.AGENT_WALLET && 
                       !CONFIG.AGENT_WALLET.includes('YOUR_AGENT_WALLET') &&
                       CONFIG.AGENT_WALLET.startsWith('0x');
@@ -140,8 +154,17 @@ function App() {
         fetchBalance();
         fetchTransactions();
       }, 30000);
-      return () => clearInterval(interval);
+      
+      return () => {
+        clearInterval(interval);
+        window.removeEventListener('resize', handleResize);
+      };
     }
+    
+    // Cleanup resize listener even if not configured
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
   }, [fetchBalance, fetchTransactions]);
 
   const handleAddFunds = useCallback(() => {
@@ -547,7 +570,7 @@ function App() {
         {/* Mission Control Grid Layout - Left: Controls | Right: Terminal */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: window.innerWidth > 1024 ? '400px 1fr' : '1fr',
+          gridTemplateColumns: isDesktop ? '400px 1fr' : '1fr',
           gap: `${21}px`,
           marginBottom: `${34}px`,
           alignItems: 'start'
