@@ -1,0 +1,17 @@
+{
+  "name": "microgate-project",
+  "version": "1.0.0",
+  "description": "MicroGate - AI Agent Payment System",
+  "type": "module",
+  "scripts": {
+    "start": "node run.js",
+    "backend": "cd backend && npm start",
+    "frontend": "cd frontend && npm run dev",
+    "agent": "cd backend && npm run agent",
+    "install-all": "npm install && cd backend && npm install && cd ../frontend && npm install && cd ..",
+    "setup": "node setup.js"
+  },
+  "keywords": ["microgate", "ai-agent", "blockchain", "payment", "base-sepolia"],
+  "author": "",
+  "license": "ISC"
+}
