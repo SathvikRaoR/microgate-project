@@ -1,53 +1,43 @@
-# MicroGate - AI Agent Payment System
+# MicroGate - AI Agent Payment System 🚀
 
-A micropayment gateway where AI agents pay for API access using cryptocurrency on Base Sepolia.
+A cyberpunk-themed micropayment gateway where AI agents pay for API access using cryptocurrency on Base Sepolia.
 
-## Features
+![Status](https://img.shields.io/badge/status-production-green)
+![Network](https://img.shields.io/badge/network-Base%20Sepolia-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
 
-- ✅ Pay-per-use API access
-- ✅ Blockchain payment verification
-- ✅ AI agent autonomously pays for services
-- ✅ Real-time balance monitoring
-- ✅ UPI payments via Transak (India)
+## ✨ Features
 
-## Quick Start
+- ⚡ **x402 Payment Rail** - Pay-per-use API access protocol
+- 🔗 **Blockchain Verified** - Payment verification on Base Sepolia
+- 🤖 **Autonomous Agent** - AI agent pays for services automatically
+- 💰 **Real-time Balance** - Live ETH balance monitoring (auto-refresh every 30s)
+- 💳 **UPI Payments** - Add funds via Transak (India: INR → USDC)
+- 🎨 **Cyberpunk UI** - Black background, neon green, scanline effects
+- 🔄 **No Wallet Required** - Direct RPC balance reading with viem
 
-### Automated Setup (Recommended)
+## 🎯 Quick Start
 
-1. **Run the setup wizard:**
-```bash
-npm run setup
-```
-
-2. **Configure environment files** (backend/.env and frontend/.env)
-
-3. **Start everything:**
-```bash
-# Using npm (cross-platform)
+### One Command Start
+```powershell
+cd microgate-project
 npm start
-
-# OR using PowerShell (Windows)
-.\run.ps1
-
-# OR using bash (Linux/Mac)
-./run.sh
-
-# To also run the agent:
-.\run.ps1 -Agent          # Windows
-./run.sh --agent          # Linux/Mac
 ```
 
-## Manual Setup Instructions
+This automatically:
+1. ✅ Runs pre-flight checks
+2. 🚀 Starts backend (port 3000)
+3. 🌐 Starts frontend (port 5173)
+4. 🎨 Opens cyberpunk dashboard in browser
 
-### Backend Setup
+### Access Points
+- **Frontend Dashboard**: http://localhost:5173
+- **Backend API**: http://localhost:3000
+- **Health Check**: http://localhost:3000/api/health
 
-1. Navigate to backend directory:
-```bash
-cd backend
-```
+---
 
-2. Install dependencies:
-```bash
+## 📦 What's New (v2.0)
 npm install
 ```
 
@@ -56,58 +46,376 @@ npm install
    - Fill in your wallet details:
      - `PRIVATE_KEY`: Your wallet's private key (for agent)
      - `WALLET_ADDRESS`: Your wallet's public address (receives payments)
-     - `RPC_URL`: Base Sepolia RPC endpoint (default provided)
+     - `RPC_URL`: Base Sepolia RPC endpoint (default provided)---
 
-4. Start the server:
-### Running the AI Agent
+## 📦 What's New (v2.0)
 
-**Option 1: With the main runner**
-```bash
-.\run.ps1 -Agent    # Windows
-./run.sh --agent    # Linux/Mac
+### 🔥 Major Improvements
+1. **Fixed Blank Screen** - Removed wagmi wallet dependency, direct viem RPC calls
+2. **Cyberpunk UI Complete** - Full cyberpunk/hacker aesthetic with animations
+3. **Auto-Refresh Balance** - Updates every 30 seconds automatically
+4. **Network Status** - Live RPC connectivity monitoring
+5. **Better Error Handling** - Clear error messages and recovery
+6. **Simplified Architecture** - No wallet connection needed for viewing
+
+See [IMPROVEMENTS.md](./IMPROVEMENTS.md) for detailed changelog.
+
+---
+
+## 🏗️ Architecture
+
+```
+┌─────────────────────────────────────┐
+│   FRONTEND (React + Viem)           │
+│   - Cyberpunk Dashboard             │
+│   - Balance Monitoring              │
+│   - UPI Payment Integration         │
+│   - Agent Control Panel             │
+│   Port: 5173                        │
+└──────────────┬──────────────────────┘
+               │ HTTP REST API
+┌──────────────▼──────────────────────┐
+│   BACKEND (Express.js)              │
+│   - Payment Verification            │
+│   - x402 Protocol Handler           │
+│   - Agent Process Manager           │
+│   Port: 3000                        │
+└──────────────┬──────────────────────┘
+               │ JSON-RPC
+┌──────────────▼──────────────────────┐
+│   BASE SEPOLIA TESTNET              │
+│   - Smart Contract Interactions     │
+│   - Balance Queries                 │
+│   - Transaction Verification        │
+└─────────────────────────────────────┘
 ```
 
-**Option 2: Separately**
-1. Ensure the backend server is running
-2. In the backend directory, run:
-```bash
+---
+
+## 🎨 UI Preview
+
+**Cyberpunk Dashboard Features:**
+- ⬛ Pure black background (#000000)
+- 🟢 Neon green accents (#00ff41)
+- 📺 Scanline CRT effect overlay
+- ✨ Glitch animation on title
+- 💫 Smooth fade-in on cards
+- 🎯 Lucide-react icons
+- 🔄 Auto-updating balance
+- 💳 Integrated UPI fueling station
+
+---
+
+## 🚀 Installation & Setup
+
+### Prerequisites
+- Node.js (v18 or higher)
+- npm or yarn
+- PowerShell (Windows) or Bash (Linux/Mac)
+
+### Step 1: Clone & Install
+```powershell
+git clone https://github.com/SathvikRaoR/microgate-project.git
+cd microgate-project
+npm install
+```
+
+### Step 2: Configure (Optional)
+Create `.env` files if you want to override defaults:
+
+**Backend** (`backend/.env`):
+```env
+PORT=3000
+AGENT_WALLET_ADDRESS=0xYourWalletHere
+PRIVATE_KEY=your_private_key_here
+```
+
+**Frontend** (`frontend/.env`):
+```env
+VITE_AGENT_WALLET_ADDRESS=0xYourWalletHere
+VITE_TRANSAK_API_KEY=your_transak_api_key
+```
+
+### Step 3: Run
+```powershell
+npm start
+```
+
+---
+
+## 📡 API Endpoints
+
+### Health Check
+```http
+GET /api/health
+```
+Returns backend status and configuration.
+
+### Trigger Agent
+```http
+POST /api/trigger-agent
+Content-Type: application/json
+
+{
+  "wallet": "0xWalletAddress"
+}
+```
+Spawns autonomous payment agent process.
+
+### Payment Verification (x402 Protocol)
+```http
+GET /api/secret
+X-Payment-Hash: 0xTransactionHash
+```
+Returns protected content after payment verification.
+
+---
+
+## 🎮 Usage Guide
+
+### 1. View Balance
+- Dashboard automatically displays ETH balance
+- Click refresh icon to manually update
+- Auto-refreshes every 30 seconds
+
+### 2. Add Funds (UPI)
+1. Click "ADD FUEL (UPI)" button
+2. Transak widget opens
+3. Select UPI payment method
+4. Enter amount in INR
+5. Complete UPI payment
+6. USDC credited to wallet
+7. Balance updates automatically
+
+### 3. Activate Agent
+1. Ensure wallet has sufficient balance
+2. Click "ACTIVATE AGENT" button
+3. Backend spawns agent process
+4. Agent attempts API access
+5. Pays if needed (402 response)
+6. Retrieves protected content
+
+---
+
+## 🔧 Advanced Configuration
+
+### Custom RPC Endpoint
+Edit `frontend/src/App.jsx`:
+```javascript
+const publicClient = createPublicClient({
+  chain: baseSepolia,
+  transport: http('https://your-custom-rpc-url.com')
+});
+```
+
+### Change Refresh Interval
+Edit `frontend/src/App.jsx`:
+```javascript
+const CONFIG = {
+  BALANCE_REFRESH_DELAY: 5000,  // Balance refresh after transaction
+  // ...
+};
+
+// Auto-refresh interval in useEffect:
+const interval = setInterval(fetchBalance, 30000); // Change 30000 to desired ms
+```
+
+### Modify Theme Colors
+Edit `frontend/src/index.css` and `App.jsx`:
+```css
+/* Change neon green to another color */
+:root {
+  --neon-color: #00ff41; /* Change this */
+}
+```
+
+---
+
+## 🧪 Testing
+
+### Test Backend
+```powershell
+# Health check
+Invoke-RestMethod -Uri "http://localhost:3000/api/health"
+
+# Expected output:
+# {
+#   "status": "healthy",
+#   "network": "Base Sepolia",
+#   "wallet": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+# }
+```
+
+### Test Frontend
+1. Open http://localhost:5173
+2. Check for:
+   - ✅ Black background with neon green text
+   - ✅ Scanline effect visible
+   - ✅ Balance loading (or showing)
+   - ✅ All 4 cards rendering
+   - ✅ Footer showing RPC status
+
+---
+
+## 🛠️ Manual Setup
+
+If automated start doesn't work:
+
+### Backend
+```powershell
+cd backend
+npm install
+npm start
+```
+
+### Frontend
+```powershell
+cd frontend
+npm install
+npm run dev
+```
+
+### Agent
+```powershell
+cd backend
 npm run agent
 ```
 
-The agent will:
-1. Check wallet balance
-2. Try to access the protected `/api/secret` endpoint
-3. Get rejected with 402 Payment Required
-4. Automatically send payment to the server wallet
-5. Wait for transaction confirmation
-6. Retry with the payment hash
-7. Successfully retrieve the secret
+---
 
-## Available Scripts
+## 📚 Project Structure
 
-From the project root:
-
-- `npm start` - Run backend and frontend servers
-- `npm run setup` - Interactive setup wizard
-- `npm run backend` - Run only the backend server
-- `npm run frontend` - Run only the frontend
-- `npm run agent` - Run the AI agent
-- `npm run install-all` - Install all dependencies
-
-From backend directory:
-- `npm start` - Start the API server
-- `npm run agent` - Run the AI agent
-
-From frontend directory:
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
+```
+microgate-project/
+├── backend/
+│   ├── server.js           # Express API server
+│   ├── agent.js            # Autonomous payment agent
+│   ├── package.json        # Backend dependencies
+│   └── .env.example        # Environment template
+├── frontend/
+│   ├── src/
+│   │   ├── App.jsx         # Main dashboard component
+│   │   ├── main.jsx        # React entry point
+│   │   └── index.css       # Cyberpunk styles & animations
+│   ├── index.html          # HTML template
+│   ├── vite.config.js      # Vite configuration
+│   └── package.json        # Frontend dependencies
+├── run.js                  # Cross-platform startup script
+├── run.ps1                 # PowerShell runner (Windows)
+├── run.sh                  # Bash runner (Linux/Mac)
+├── package.json            # Root package configuration
+├── README.md               # This file
+└── IMPROVEMENTS.md         # Detailed changelog
 ```
 
-3. Configure environment variables:
-   - Copy `.env.example` to `.env`
-   - Fill in:
-     - `VITE_AGENT_WALLET_ADDRESS`: The agent's wallet address
+---
+
+## 🐛 Troubleshooting
+
+### Blank Screen
+**Solution**: Already fixed in v2.0. If still occurring:
+1. Check browser console for errors
+2. Ensure `npm start` shows both servers running
+3. Clear browser cache and reload
+4. Verify RPC endpoint is accessible
+
+### Balance Not Loading
+**Causes**:
+- RPC endpoint down
+- Wallet address invalid
+- Network connectivity issue
+
+**Solution**:
+- Check footer "RPC STATUS" indicator
+- Verify wallet address starts with "0x"
+- Try manual refresh button
+
+### Port Already in Use
+```powershell
+# Kill processes on ports 3000 and 5173
+Get-Process node | Stop-Process -Force
+```
+
+### Node Modules Issues
+```powershell
+# Clean reinstall
+Remove-Item -Recurse -Force node_modules, package-lock.json
+npm install
+```
+
+---
+
+## 📊 Tech Stack
+
+### Frontend
+- **React 18.2** - UI framework
+- **Viem 2.7** - Ethereum interactions (no wallet needed)
+- **Transak SDK 3.0** - Fiat on-ramp (UPI payments)
+- **Lucide React** - Icon library
+- **Vite 5.2** - Build tool & dev server
+
+### Backend
+- **Express 4.18** - API server
+- **Viem 2.7** - Blockchain transactions
+- **CORS** - Cross-origin support
+
+### Blockchain
+- **Base Sepolia** - Testnet
+- **HTTP RPC** - No wallet provider needed
+
+---
+
+## 🔐 Security Notes
+
+⚠️ **Important**:
+- Never commit private keys to Git
+- Use `.gitignore` for `.env` files
+- Testnet only - not for mainnet use
+- CORS configured for localhost only
+- Input validation on all endpoints
+
+---
+
+## 🤝 Contributing
+
+Contributions welcome! Please:
+1. Fork the repository
+2. Create feature branch (`git checkout -b feature/amazing`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing`)
+5. Open Pull Request
+
+---
+
+## 📄 License
+
+MIT License - see LICENSE file for details
+
+---
+
+## 🙏 Acknowledgments
+
+- **Viem** - Modern Ethereum library
+- **Transak** - Fiat-to-crypto on-ramp
+- **Lucide** - Beautiful icon library
+- **Base** - Optimistic Ethereum L2
+
+---
+
+## 📞 Support
+
+- 📧 Email: support@microgate.example
+- 💬 Discord: [Join Server](#)
+- 🐛 Issues: [GitHub Issues](https://github.com/SathvikRaoR/microgate-project/issues)
+- 📖 Docs: See [IMPROVEMENTS.md](./IMPROVEMENTS.md)
+
+---
+
+**Built with ❤️ by the MicroGate Team**
+
+**Last Updated**: November 29, 2025  
+**Version**: 2.0.0  
+**Status**: ✅ Production Ready
      - `VITE_TRANSAK_API_KEY`: Get from https://transak.com/
 
 4. Start the development server:

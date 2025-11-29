@@ -86,8 +86,9 @@ async function waitForConfirmation(hash) {
 
 /**
  * Main agent execution function
+ * @returns {Promise<object>} Result object with success status and data
  */
-async function runAgent() {
+export async function runAgent() {
   console.log('🤖 Agent Starting...');
   console.log(`📍 Agent Wallet: ${account.address}`);
   console.log(`🌐 API Endpoint: ${CONFIG.API_URL}/api/secret`);
@@ -99,10 +100,7 @@ async function runAgent() {
     console.log(`💰 Current Balance: ${balanceInEth.toFixed(6)} ETH`);
 
     if (balanceInEth < parseFloat(CONFIG.PAYMENT_AMOUNT)) {
-      console.error('❌ Insufficient balance for payment');
-      console.log(`   Required: ${CONFIG.PAYMENT_AMOUNT} ETH`);
-      console.log(`   Available: ${balanceInEth.toFixed(6)} ETH`);
-      process.exit(1);
+      throw new Error(`Insufficient balance. Required: ${CONFIG.PAYMENT_AMOUNT} ETH, Available: ${balanceInEth.toFixed(6)} ETH`);
     }
 
     // Step 1: Try to access the secret
@@ -149,45 +147,69 @@ async function runAgent() {
         console.log(`🔐 Secret Revealed: "${secretData.secret}"`);
         console.log(`📜 Transaction: ${secretData.transactionHash}`);
         console.log(`✓ Verified: ${secretData.verified}`);
+        
+        // Return success data
+        return {
+          success: true,
+          data: {
+            secret: secretData.secret,
+            transactionHash: secretData.transactionHash,
+            verified: secretData.verified,
+            paymentAmount: CONFIG.PAYMENT_AMOUNT,
+            gasUsed: receipt.gasUsed.toString()
+          }
+        };
       } else {
         const errorData = await retryResponse.json();
-        console.error('\n❌ Failed to access secret:');
-        console.error(`   Error: ${errorData.error}`);
-        if (errorData.details) console.error(`   Details: ${errorData.details}`);
-        process.exit(1);
+        throw new Error(errorData.error || 'Failed to access secret after payment');
       }
 
     } else if (response.ok) {
       const data = await response.json();
       console.log('✅ Secret already accessible:', data.secret);
+      
+      return {
+        success: true,
+        data: {
+          secret: data.secret,
+          message: 'Secret was already accessible (no payment needed)'
+        }
+      };
     } else {
       const errorData = await response.json();
-      console.error('❌ Unexpected response:', errorData);
-      process.exit(1);
+      throw new Error(errorData.error || 'Unexpected response from server');
     }
 
   } catch (error) {
     console.error('\n❌ Agent Error:', error.message);
-    if (error.stack) {
-      console.error('Stack trace:', error.stack);
-    }
-    process.exit(1);
+    throw error;
   }
 }
 
-// Handle graceful shutdown
-process.on('SIGINT', () => {
-  console.log('\n\n👋 Agent shutting down...');
-  process.exit(0);
-});
+// Only run directly if this file is executed (not imported)
+if (import.meta.url === `file://${process.argv[1]}`) {
+  console.log('═'.repeat(60));
+  console.log('🚀 MicroGate AI Agent');
+  console.log('═'.repeat(60));
+  
+  runAgent()
+    .then(result => {
+      console.log('\n✅ Agent completed successfully');
+      process.exit(0);
+    })
+    .catch(error => {
+      console.error('\n❌ Agent failed:', error.message);
+      process.exit(1);
+    });
 
-process.on('SIGTERM', () => {
-  console.log('\n\n👋 Agent shutting down...');
-  process.exit(0);
-});
+  // Handle graceful shutdown
+  process.on('SIGINT', () => {
+    console.log('\n\n👋 Agent shutting down...');
+    process.exit(0);
+  });
 
-// Run the agent
-console.log('═'.repeat(60));
-console.log('🚀 MicroGate AI Agent');
-console.log('═'.repeat(60));
-runAgent();
+  process.on('SIGTERM', () => {
+    console.log('\n\n👋 Agent shutting down...');
+    process.exit(0);
+  });
+}

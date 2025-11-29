@@ -1,9 +1,11 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import rateLimit from 'express-rate-limit';
 import { createPublicClient, http, formatUnits } from 'viem';
 import { baseSepolia } from 'viem/chains';
 import { isAddress } from 'viem';
+import { runAgent } from './agent.js';
 
 dotenv.config();
 
@@ -29,12 +31,48 @@ validateConfig();
 
 // Initialize Express app
 const app = express();
+
+// CORS Configuration - Allow Frontend URL + localhost for development
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:3000'
+].filter(Boolean); // Remove undefined values
+
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || '*',
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST'],
   credentials: true
 }));
+
+// Rate Limiting - 5 requests per minute per IP
+const limiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 5, // 5 requests per windowMs
+  message: {
+    error: 'Too many requests from this IP, please try again after a minute.',
+    retryAfter: 60
+  },
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+});
+
 app.use(express.json());
+
+// Apply rate limiting to specific routes (not health check)
+app.use('/api/trigger-agent', limiter);
+app.use('/api/validate-payment', limiter);
 
 // Initialize Viem client
 const publicClient = createPublicClient({
@@ -50,6 +88,18 @@ const CONFIG = {
   MIN_ETH_AMOUNT: '0.0001',
   PORT: process.env.PORT || 3000
 };
+
+// Console colors for logging
+const colors = {
+  reset: '\x1b[0m',
+  cyan: '\x1b[36m',
+  green: '\x1b[32m',
+  red: '\x1b[31m'
+};
+
+function log(color, prefix, message) {
+  console.log(`${color}[${prefix}]${colors.reset} ${message}`);
+}
 
 /**
  * Validates a payment transaction hash
@@ -172,6 +222,54 @@ app.get('/api/health', (req, res) => {
     network: 'Base Sepolia',
     wallet: CONFIG.SERVER_WALLET
   });
+});
+
+/**
+ * POST /api/trigger-agent - Trigger the autonomous agent
+ * Executes the agent to autonomously pay for API access
+ */
+app.post('/api/trigger-agent', async (req, res) => {
+  const { wallet } = req.body;
+
+  log(colors.cyan, 'TRIGGER', `Agent activation requested for wallet: ${wallet || 'default'}`);
+
+  try {
+    log(colors.cyan, 'INFO', 'Executing agent...');
+    
+    // Execute the agent and await the result
+    const result = await runAgent();
+
+    if (result.success) {
+      log(colors.green, 'SUCCESS', 'Agent completed successfully');
+      
+      return res.status(200).json({
+        success: true,
+        message: 'Agent completed successfully',
+        data: {
+          ...result.data,
+          // Ensure transaction hash is included for frontend to display
+          transactionHash: result.data?.transactionHash || result.data?.paymentTxHash,
+          basescanUrl: result.data?.transactionHash 
+            ? `https://sepolia.basescan.org/tx/${result.data.transactionHash}`
+            : result.data?.paymentTxHash
+            ? `https://sepolia.basescan.org/tx/${result.data.paymentTxHash}`
+            : null
+        },
+        timestamp: new Date().toISOString()
+      });
+    } else {
+      throw new Error('Agent returned unsuccessful result');
+    }
+
+  } catch (error) {
+    console.error('❌ Agent execution error:', error);
+    
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to execute agent',
+      timestamp: new Date().toISOString()
+    });
+  }
 });
 
 /**

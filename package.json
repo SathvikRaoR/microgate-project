@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "node run.js",
+    "test": "node test.js",
     "backend": "cd backend && npm start",
     "frontend": "cd frontend && npm run dev",
     "agent": "cd backend && npm run agent",
