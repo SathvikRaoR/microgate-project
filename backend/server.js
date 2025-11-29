@@ -34,10 +34,6 @@ const validateConfig = () => {
   if (!isAddress(process.env.WALLET_ADDRESS)) {
     throw new Error('Invalid WALLET_ADDRESS format');
   }
-
-  if (process.env.USDC_CONTRACT && !isAddress(process.env.USDC_CONTRACT)) {
-    throw new Error('Invalid USDC_CONTRACT format');
-  }
 };
 
 validateConfig();
@@ -121,8 +117,6 @@ const publicClient = createPublicClient({
 // Constants
 const CONFIG = {
   SERVER_WALLET: process.env.WALLET_ADDRESS,
-  USDC_CONTRACT: process.env.USDC_CONTRACT,
-  REQUIRED_AMOUNT_USDC: '0.01',
   MIN_ETH_AMOUNT: '0.0001',
   PORT: process.env.PORT || 3000
 };
@@ -137,106 +131,6 @@ const colors = {
 
 function log(color, prefix, message) {
   console.log(`${color}[${prefix}]${colors.reset} ${message}`);
-}
-
-/**
- * Validates a payment transaction hash
- * @param {string} paymentHash - The transaction hash to validate
- * @returns {Promise<{valid: boolean, error?: string, secret?: string, transactionHash?: string}>}
- */
-async function validatePayment(paymentHash) {
-  if (!paymentHash || typeof paymentHash !== 'string' || !paymentHash.startsWith('0x')) {
-    return { valid: false, error: 'Invalid payment hash format' };
-  }
-
-  try {
-    console.log(`Verifying transaction: ${paymentHash}`);
-    
-    const receipt = await publicClient.getTransactionReceipt({
-      hash: paymentHash
-    });
-
-    console.log('Receipt status:', receipt.status);
-
-    if (receipt.status !== 'success') {
-      return {
-        valid: false,
-        error: 'Transaction failed',
-        details: `Status: ${receipt.status}`
-      };
-    }
-
-    // Check if payment is to correct address
-    const isToServerWallet = receipt.to?.toLowerCase() === CONFIG.SERVER_WALLET?.toLowerCase();
-    const isToUSDC = CONFIG.USDC_CONTRACT && 
-                     receipt.to?.toLowerCase() === CONFIG.USDC_CONTRACT?.toLowerCase();
-    
-    if (!isToServerWallet && !isToUSDC) {
-      return {
-        valid: false,
-        error: 'Payment sent to wrong address',
-        expected: `${CONFIG.SERVER_WALLET}${CONFIG.USDC_CONTRACT ? ` or ${CONFIG.USDC_CONTRACT}` : ''}`,
-        received: receipt.to
-      };
-    }
-
-    // Verify payment amount for ETH payments
-    if (isToServerWallet) {
-      const ethAmount = formatUnits(receipt.value || 0n, 18);
-      console.log(`ETH payment amount: ${ethAmount} ETH`);
-      
-      if (parseFloat(ethAmount) < parseFloat(CONFIG.MIN_ETH_AMOUNT)) {
-        return {
-          valid: false,
-          error: 'Insufficient payment amount',
-          expected: `${CONFIG.MIN_ETH_AMOUNT} ETH minimum`,
-          received: `${ethAmount} ETH`
-        };
-      }
-    } else if (isToUSDC) {
-      console.log('USDC payment detected');
-    }
-
-    console.log('Payment verified successfully!');
-    
-    // Save transaction to Supabase
-    if (supabase) {
-      try {
-        const { error: insertError } = await supabase
-          .from('transactions')
-          .insert({
-            agent_address: receipt.from,
-            tx_hash: paymentHash,
-            amount: isToServerWallet ? parseFloat(formatUnits(receipt.value || 0n, 18)) : 0,
-            status: 'confirmed'
-          });
-
-        if (insertError) {
-          console.error('Failed to save transaction to Supabase:', insertError);
-        } else {
-          console.log('✅ Transaction saved to Supabase database');
-        }
-      } catch (dbError) {
-        console.error('Supabase error:', dbError);
-        // Don't fail the validation if database save fails
-      }
-    }
-    
-    return {
-      valid: true,
-      secret: 'The Agent Economy is Live!',
-      transactionHash: paymentHash,
-      verified: true
-    };
-
-  } catch (error) {
-    console.error('Verification error:', error);
-    return {
-      valid: false,
-      error: 'Could not verify transaction',
-      details: error.message
-    };
-  }
 }
 
 /**

@@ -3,11 +3,9 @@ import { createPublicClient, http, formatEther } from 'viem'
 import { baseSepolia } from 'viem/chains'
 import { Transak } from '@transak/transak-sdk'
 import { Sun, Moon, Zap, Wallet, Activity, ExternalLink, CheckCircle2, Download } from 'lucide-react'
-import ActivityLog from './components/ActivityLog'
 import ActivityTerminal from './components/ActivityTerminal'
 import TransactionHistory from './components/TransactionHistory'
 import SystemStatus from './components/SystemStatus'
-import StatusFooter from './components/StatusFooter'
 import { generateInvoice } from './utils/invoiceGenerator'
 
 // Configuration - Production & Development

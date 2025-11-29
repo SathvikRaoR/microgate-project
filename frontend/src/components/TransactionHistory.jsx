@@ -17,7 +17,7 @@ export default function TransactionHistory({ theme = 'dark', transactions = null
         hour12: true 
       }),
       action: 'Premium API Access',
-      amount: '0.01 USDC',
+      amount: '0.0001 ETH',
       hash: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb8',
       status: 'success',
       basescanUrl: 'https://sepolia.basescan.org/tx/0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb8'
